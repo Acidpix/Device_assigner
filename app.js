@@ -87,7 +87,12 @@ function renderReserve() {
       const units = itemUnits(item.id);
       const avail = units.filter(u => !assignedIds.has(u.id)).length;
 
-      const slotsHtml = units.map(unit => {
+      const sorted = [
+        ...units.filter(u => !assignedIds.has(u.id)),
+        ...units.filter(u =>  assignedIds.has(u.id)),
+      ];
+
+      const slotsHtml = sorted.map(unit => {
         const isAssigned = assignedIds.has(unit.id);
         const pt         = isAssigned ? unitPoint(unit.id) : null;
         const title      = isAssigned
