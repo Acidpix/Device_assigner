@@ -9,10 +9,13 @@
 <body>
   <header>
     <div class="header-inner">
-      <h1>Solidays <span>Répartition Matériel</span></h1>
+      <div class="header-brand">
+        <img src="https://www.solidays.org/wp-content/uploads/2023/11/s24_logo2l_sansdate.png" alt="Solidays" class="header-logo" />
+        <span class="header-subtitle">Répartition Matériel</span>
+      </div>
       <nav>
-        <button class="nav-btn active" data-tab="reserve">Réserve</button>
-        <button class="nav-btn" data-tab="points">Points</button>
+        <button class="nav-btn active" data-tab="points">Points</button>
+        <button class="nav-btn" data-tab="reserve">Réserve</button>
         <button class="nav-btn" data-tab="admin">Administration</button>
       </nav>
     </div>
@@ -20,7 +23,7 @@
 
   <main>
     <!-- ── TAB: RÉSERVE ── -->
-    <section id="tab-reserve" class="tab active">
+    <section id="tab-reserve" class="tab">
       <div class="section-header">
         <h2>Réserve</h2>
         <div class="filter-row">
@@ -33,7 +36,7 @@
     </section>
 
     <!-- ── TAB: POINTS ── -->
-    <section id="tab-points" class="tab">
+    <section id="tab-points" class="tab active">
       <div class="section-header">
         <h2>Points de distribution</h2>
         <button class="btn-primary" id="btn-add-point">+ Ajouter un point</button>
@@ -69,14 +72,7 @@
             <button type="submit" class="btn-primary">Ajouter</button>
           </form>
 
-          <!-- Accordion liste des types -->
-          <div class="accordion">
-            <button type="button" id="items-accordion-toggle" class="accordion-toggle">
-              <span>Types — <span id="items-accordion-count">0</span></span>
-              <span id="items-accordion-arrow" class="accordion-arrow">▶</span>
-            </button>
-            <ul id="items-accordion-body" class="items-accordion-list hidden"></ul>
-          </div>
+          <ul id="items-accordion-body" class="items-accordion-list"></ul>
         </div>
 
       </div>

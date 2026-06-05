@@ -219,8 +219,7 @@ function renderAdmin() {
     ul.appendChild(li);
   });
 
-  // Types de matériel — accordion
-  document.getElementById('items-accordion-count').textContent = state.items.length;
+  // Types de matériel
   const list = document.getElementById('items-accordion-body');
   list.innerHTML = '';
 
@@ -591,23 +590,7 @@ document.getElementById('form-add-item').addEventListener('submit', e => {
   saveState();
   document.getElementById('input-item-name').value = '';
   document.getElementById('input-item-qty').value  = '1';
-  // Ouvrir l'accordion si fermé
-  const body   = document.getElementById('items-accordion-body');
-  const toggle = document.getElementById('items-accordion-toggle');
-  if (body.classList.contains('hidden')) {
-    body.classList.remove('hidden');
-    toggle.classList.add('open');
-  }
   renderAll();
-});
-
-// Accordion
-document.getElementById('items-accordion-toggle').addEventListener('click', () => {
-  const body   = document.getElementById('items-accordion-body');
-  const toggle = document.getElementById('items-accordion-toggle');
-  const isOpen = !body.classList.contains('hidden');
-  body.classList.toggle('hidden', isOpen);
-  toggle.classList.toggle('open', !isOpen);
 });
 
 // Ajouter point

@@ -21,9 +21,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); co
 
 /* ── Header ── */
 header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-.header-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px; }
-header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: .02em; }
-header h1 span { color: var(--accent); font-weight: 400; }
+.header-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 76px; }
+.header-brand { display: flex; align-items: center; gap: 14px; }
+.header-logo { height: 60px; width: auto; display: block; object-fit: contain; }
+.header-subtitle { font-size: 1rem; font-weight: 500; color: var(--text-muted); letter-spacing: .02em; }
 nav { display: flex; gap: 4px; }
 .nav-btn { background: transparent; border: none; color: var(--text-muted); padding: 8px 18px; border-radius: var(--radius); cursor: pointer; font-size: .9rem; transition: background .15s, color .15s; }
 .nav-btn:hover { background: var(--surface2); color: var(--text); }
