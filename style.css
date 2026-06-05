@@ -66,17 +66,20 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .item-card-count strong { color: var(--text); }
 
 /* Grille d'unités */
-.unit-slots { display: flex; flex-wrap: wrap; gap: 2px; }
+.unit-slots {
+  display: grid;
+  grid-template-columns: repeat(10, 18px);
+  gap: 2px;
+}
 .unit-slot {
   width: 18px; height: 7px;
   border-radius: 2px;
-  flex-shrink: 0;
   cursor: default;
   border: 1px solid rgba(0,0,0,.3);
   transition: opacity .12s;
 }
 .unit-slot:hover { opacity: .7; }
-.unit-slot.assigned { background: var(--bg); border: 1px solid var(--border); }
+.unit-slot.assigned { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.18); }
 
 /* ── Points grid ── */
 #points-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
