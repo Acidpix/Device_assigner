@@ -1,0 +1,5 @@
+# Normalise les fins de ligne en LF dans le dépôt
+* text=auto eol=lf
+
+# Le script shell DOIT rester en LF (sinon bash plante sur Linux)
+*.sh text eol=lf

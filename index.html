@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solidays — Répartition Matériel</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Solidays <span>Répartition Matériel</span></h1>
+      <nav>
+        <button class="nav-btn active" data-tab="reserve">Réserve</button>
+        <button class="nav-btn" data-tab="points">Points</button>
+        <button class="nav-btn" data-tab="admin">Administration</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ── TAB: RÉSERVE ── -->
+    <section id="tab-reserve" class="tab active">
+      <div class="section-header">
+        <h2>Réserve</h2>
+        <div class="filter-row">
+          <label>Catégorie :
+            <select id="reserve-filter-cat">
+              <option value="">Toutes</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div id="reserve-categories"></div>
+    </section>
+
+    <!-- ── TAB: POINTS ── -->
+    <section id="tab-points" class="tab">
+      <div class="section-header">
+        <h2>Points de distribution</h2>
+        <button class="btn-primary" id="btn-add-point">+ Ajouter un point</button>
+      </div>
+      <div id="points-grid"></div>
+    </section>
+
+    <!-- ── TAB: ADMINISTRATION ── -->
+    <section id="tab-admin" class="tab">
+      <div class="admin-columns">
+        <!-- Catégories -->
+        <div class="admin-card">
+          <h3>Catégories</h3>
+          <form id="form-add-category">
+            <input type="text" id="input-cat-name" placeholder="Nom de la catégorie" required />
+            <input type="color" id="input-cat-color" value="#6c5ce7" title="Couleur" />
+            <button type="submit" class="btn-primary">Ajouter</button>
+          </form>
+          <ul id="list-categories" class="admin-list"></ul>
+        </div>
+
+        <!-- Matériel -->
+        <div class="admin-card">
+          <h3>Matériel</h3>
+          <form id="form-add-item">
+            <input type="text" id="input-item-name" placeholder="Nom du matériel" required />
+            <select id="input-item-cat" required>
+              <option value="">— Catégorie —</option>
+            </select>
+            <input type="number" id="input-item-qty" placeholder="Quantité" min="1" value="1" required />
+            <button type="submit" class="btn-primary">Ajouter</button>
+          </form>
+          <ul id="list-items" class="admin-list"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ── MODAL: Assigner du matériel ── -->
+  <div id="modal-assign" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-assign-title">Assigner — Point</h3>
+        <button class="modal-close" id="btn-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="assign-form">
+          <select id="assign-item-select">
+            <option value="">— Matériel —</option>
+          </select>
+          <input type="number" id="assign-qty" min="1" value="1" />
+          <button class="btn-primary" id="btn-do-assign">Assigner</button>
+        </div>
+        <h4>Matériel assigné</h4>
+        <ul id="modal-assigned-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL: Ajouter un point ── -->
+  <div id="modal-add-point" class="modal hidden">
+    <div class="modal-box modal-box--sm">
+      <div class="modal-header">
+        <h3>Nouveau point</h3>
+        <button class="modal-close" id="btn-close-add-point">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="form-add-point">
+          <label>Nom du point
+            <input type="text" id="input-point-name" placeholder="ex : Scène principale" required />
+          </label>
+          <label>Description (optionnel)
+            <input type="text" id="input-point-desc" placeholder="ex : Zone VIP, côté jardin…" />
+          </label>
+          <button type="submit" class="btn-primary" style="margin-top:12px">Créer</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
