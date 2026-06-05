@@ -81,20 +81,31 @@ function renderReserve() {
     container.appendChild(block);
 
     const grid = block.querySelector('.items-grid');
+    const assignedIds = new Set(state.assignments.map(a => a.unitId));
+
     catItems.forEach(item => {
-      const total = itemUnits(item.id).length;
-      const avail = reserveUnits(item.id).length;
-      const pct   = total > 0 ? Math.round((avail / total) * 100) : 0;
-      const card  = document.createElement('div');
+      const units = itemUnits(item.id);
+      const avail = units.filter(u => !assignedIds.has(u.id)).length;
+
+      const slotsHtml = units.map(unit => {
+        const isAssigned = assignedIds.has(unit.id);
+        const pt         = isAssigned ? unitPoint(unit.id) : null;
+        const title      = isAssigned
+          ? `${unit.name} → ${pt ? pt.name : '?'}`
+          : unit.name;
+        return `<span class="unit-slot ${isAssigned ? 'assigned' : 'libre'}"
+          style="${isAssigned ? '' : `background:${cat.color}`}"
+          title="${title}"></span>`;
+      }).join('');
+
+      const card = document.createElement('div');
       card.className = 'item-card';
       card.innerHTML = `
-        <div class="item-card-name">${item.name}</div>
-        <div class="item-card-stock">
-          <div class="stock-bar">
-            <div class="stock-bar-fill" style="width:${pct}%;background:${cat.color}"></div>
-          </div>
-          <span class="stock-count"><strong>${avail}</strong> / ${total}</span>
+        <div class="item-card-header">
+          <span class="item-card-name">${item.name}</span>
+          <span class="item-card-count"><strong>${avail}</strong>/${units.length}</span>
         </div>
+        <div class="unit-slots">${slotsHtml}</div>
       `;
       grid.appendChild(card);
     });
