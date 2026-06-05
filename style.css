@@ -50,6 +50,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .btn-sm { padding: 4px 10px; font-size: .78rem; }
 .btn-danger-full { width: 100%; background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 10px; border-radius: 7px; cursor: pointer; font-size: .88rem; transition: background .15s; }
 .btn-danger-full:hover { background: rgba(224,92,92,.12); }
+.btn-warning { background: rgba(249,168,37,.12); color: #f9a825; border: 1px solid rgba(249,168,37,.35); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: .8rem; font-weight: 600; transition: background .15s; white-space: nowrap; }
+.btn-warning:hover { background: rgba(249,168,37,.28); }
 
 /* ── Reserve ── */
 .category-block { margin-bottom: 32px; }
@@ -104,6 +106,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 @media (max-width: 640px) { .admin-columns { grid-template-columns: 1fr; } }
 .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
 .admin-card h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 16px; }
+.admin-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.admin-card-header h3 { margin-bottom: 0; }
 .admin-card form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .admin-card input[type="text"],
 .admin-card input[type="number"],
@@ -158,11 +162,14 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .item-units-list { border-top: 1px solid var(--border); padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; background: #161929; }
 
 .unit-row { display: flex; align-items: center; gap: 8px; }
+.unit-inv { accent-color: var(--accent); width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; }
 .unit-name {
   flex: 1; background: var(--surface2); border: 1px solid var(--border);
   color: var(--text); padding: 5px 9px; border-radius: 5px; font-size: .82rem;
 }
 .unit-name:focus { border-color: var(--accent); outline: none; }
+.unit-row.out-of-inventory .unit-name { opacity: .4; text-decoration: line-through; }
+.unit-row.out-of-inventory .unit-status { opacity: .35; }
 
 .unit-status { font-size: .72rem; padding: 2px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
 .unit-status.libre { background: rgba(0,184,148,.15); color: var(--success); }

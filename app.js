@@ -33,12 +33,14 @@ function getItem(id)  { return state.items.find(i => i.id === id); }
 function getPoint(id) { return state.points.find(p => p.id === id); }
 function getUnit(id)  { return state.units.find(u => u.id === id); }
 
+function isInInventaire(unit) { return unit.inventaire !== false; }
+
 function itemUnits(itemId) {
   return state.units.filter(u => u.itemId === itemId);
 }
 function reserveUnits(itemId) {
   const assignedIds = new Set(state.assignments.map(a => a.unitId));
-  return state.units.filter(u => u.itemId === itemId && !assignedIds.has(u.id));
+  return state.units.filter(u => u.itemId === itemId && !assignedIds.has(u.id) && isInInventaire(u));
 }
 function unitPoint(unitId) {
   const a = state.assignments.find(a => a.unitId === unitId);
@@ -65,7 +67,7 @@ function renderReserve() {
     const catItems = state.items.filter(i => i.catId === cat.id);
     if (!catItems.length) return;
 
-    const totalUnits   = catItems.reduce((s, i) => s + itemUnits(i.id).length, 0);
+    const totalUnits   = catItems.reduce((s, i) => s + itemUnits(i.id).filter(isInInventaire).length, 0);
     const totalReserve = catItems.reduce((s, i) => s + reserveUnits(i.id).length, 0);
 
     const block = document.createElement('div');
@@ -84,7 +86,7 @@ function renderReserve() {
     const assignedIds = new Set(state.assignments.map(a => a.unitId));
 
     catItems.forEach(item => {
-      const units = itemUnits(item.id);
+      const units = itemUnits(item.id).filter(isInInventaire);
       const avail = units.filter(u => !assignedIds.has(u.id)).length;
 
       const sorted = [
@@ -339,16 +341,20 @@ function buildItemRow(item, list) {
   function refreshUnits() {
     unitsList.innerHTML = '';
     itemUnits(item.id).forEach(unit => {
-      const pt  = unitPoint(unit.id);
-      const row = document.createElement('div');
-      row.className = 'unit-row';
+      const pt      = unitPoint(unit.id);
+      const inInv   = isInInventaire(unit);
+      const row     = document.createElement('div');
+      row.className = 'unit-row' + (inInv ? '' : ' out-of-inventory');
       row.innerHTML = `
+        <input type="checkbox" class="unit-inv" ${inInv ? 'checked' : ''} title="En inventaire" />
         <input type="text" class="unit-name" value="${unit.name.replace(/"/g, '&quot;')}" />
         <span class="unit-status ${pt ? 'assigned' : 'libre'}">${pt ? '→ ' + pt.name : 'Libre'}</span>
         <button type="button" class="unit-delete" ${pt ? 'disabled title="Retirer d\'abord du point"' : ''}>✕</button>
       `;
 
-      const nameInput = row.querySelector('.unit-name');
+      const nameInput  = row.querySelector('.unit-name');
+      const invCheckbox = row.querySelector('.unit-inv');
+
       const persist = () => {
         const v = nameInput.value.trim();
         if (!v) { nameInput.value = unit.name; return; }
@@ -360,6 +366,20 @@ function buildItemRow(item, list) {
       };
       nameInput.addEventListener('blur', persist);
       nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') nameInput.blur(); });
+
+      invCheckbox.addEventListener('change', () => {
+        const idx = state.units.findIndex(u => u.id === unit.id);
+        if (idx === -1) return;
+        state.units[idx].inventaire = invCheckbox.checked;
+        if (!invCheckbox.checked) {
+          state.assignments = state.assignments.filter(a => a.unitId !== unit.id);
+        }
+        saveState();
+        refreshUnits();
+        qtySpan.innerHTML    = summaryQty();
+        unitsBtn.textContent = unitsLabel();
+        renderReserve(); renderPoints();
+      });
 
       row.querySelector('.unit-delete').addEventListener('click', () => {
         if (!confirm(`Supprimer l'unité « ${unit.name} » ?`)) return;
@@ -693,6 +713,17 @@ document.getElementById('btn-detail-do-assign').addEventListener('click', () => 
 document.getElementById('overlay').addEventListener('click', () => {
   closePointDetail();
   closeAddPointModal();
+});
+
+// Reset inventaire
+document.getElementById('btn-reset-inventory').addEventListener('click', () => {
+  const total = state.units.length;
+  if (!total) return;
+  if (!confirm(`Décocher toutes les cases inventaire (${total} unités) ?\n\nLes unités ne seront plus visibles dans la réserve ni assignables. Les noms et catégories sont conservés.`)) return;
+  state.units.forEach(u => { u.inventaire = false; });
+  state.assignments = [];
+  saveState();
+  renderAll();
 });
 
 // ── Init ────────────────────────────────────────────────────────────────────
