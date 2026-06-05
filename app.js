@@ -252,7 +252,7 @@ function renderAdmin() {
     ul.appendChild(li);
   });
 
-  // Types de matériel
+  // Types de matériel — groupés par catégorie
   const list = document.getElementById('items-accordion-body');
   list.innerHTML = '';
 
@@ -262,7 +262,19 @@ function renderAdmin() {
     li.textContent = 'Aucun type de matériel ajouté.';
     list.appendChild(li);
   } else {
-    state.items.forEach(item => buildItemRow(item, list));
+    state.categories.forEach(cat => {
+      const catItems = state.items.filter(i => i.catId === cat.id);
+      if (!catItems.length) return;
+      // En-tête de groupe
+      const header = document.createElement('li');
+      header.className = 'items-cat-header';
+      header.innerHTML = `<span class="cat-dot" style="background:${cat.color}"></span>${cat.name}`;
+      list.appendChild(header);
+      catItems.forEach(item => buildItemRow(item, list));
+    });
+    // Items sans catégorie connue (sécurité)
+    const orphans = state.items.filter(i => !getCat(i.catId));
+    orphans.forEach(item => buildItemRow(item, list));
   }
 
   // Select catégorie du formulaire d'ajout
