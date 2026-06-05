@@ -99,6 +99,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .admin-list li { display: flex; align-items: center; justify-content: space-between; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; font-size: .88rem; gap: 8px; }
 .admin-list-info { display: flex; align-items: center; gap: 8px; flex: 1; }
 .admin-list-meta { color: var(--text-muted); font-size: .8rem; }
+.cat-edit-name  { flex: 1; background: var(--bg); border: 1px solid var(--accent); color: var(--text); padding: 5px 10px; border-radius: 6px; font-size: .88rem; outline: none; }
+.cat-edit-color { width: 34px; height: 32px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; padding: 2px; background: var(--surface2); flex-shrink: 0; }
 
 /* ── Accordion ── */
 .accordion { margin-top: 4px; }

@@ -176,24 +176,63 @@ function renderAdmin() {
   ul.innerHTML = '';
   state.categories.forEach(cat => {
     const li = document.createElement('li');
-    li.innerHTML = `
-      <div class="admin-list-info">
-        <span class="cat-dot" style="background:${cat.color}"></span>
-        <span>${cat.name}</span>
-      </div>
-      <button class="btn-danger btn-del-cat">Supprimer</button>
-    `;
-    li.querySelector('.btn-del-cat').addEventListener('click', () => {
-      const hasItems = state.items.some(i => i.catId === cat.id);
-      if (hasItems && !confirm(`La catégorie « ${cat.name} » contient du matériel. Tout supprimer ?`)) return;
-      const itemIds   = state.items.filter(i => i.catId === cat.id).map(i => i.id);
-      const unitIds   = state.units.filter(u => itemIds.includes(u.itemId)).map(u => u.id);
-      state.assignments = state.assignments.filter(a => !unitIds.includes(a.unitId));
-      state.units       = state.units.filter(u => !itemIds.includes(u.itemId));
-      state.items       = state.items.filter(i => i.catId !== cat.id);
-      state.categories  = state.categories.filter(c => c.id !== cat.id);
-      saveState(); renderAll();
-    });
+
+    function showView() {
+      li.innerHTML = `
+        <div class="admin-list-info">
+          <span class="cat-dot" style="background:${cat.color}"></span>
+          <span class="cat-label">${cat.name}</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-ghost btn-sm btn-edit-cat">✎</button>
+          <button class="btn-danger btn-del-cat">Supprimer</button>
+        </div>
+      `;
+      li.querySelector('.btn-edit-cat').addEventListener('click', showEdit);
+      li.querySelector('.btn-del-cat').addEventListener('click', () => {
+        const hasItems = state.items.some(i => i.catId === cat.id);
+        if (hasItems && !confirm(`La catégorie « ${cat.name} » contient du matériel. Tout supprimer ?`)) return;
+        const itemIds = state.items.filter(i => i.catId === cat.id).map(i => i.id);
+        const unitIds = state.units.filter(u => itemIds.includes(u.itemId)).map(u => u.id);
+        state.assignments = state.assignments.filter(a => !unitIds.includes(a.unitId));
+        state.units       = state.units.filter(u => !itemIds.includes(u.itemId));
+        state.items       = state.items.filter(i => i.catId !== cat.id);
+        state.categories  = state.categories.filter(c => c.id !== cat.id);
+        saveState(); renderAll();
+      });
+    }
+
+    function showEdit() {
+      li.innerHTML = `
+        <input type="text"  class="cat-edit-name"  value="${cat.name.replace(/"/g, '&quot;')}" />
+        <input type="color" class="cat-edit-color" value="${cat.color}" title="Couleur" />
+        <div style="display:flex;gap:6px">
+          <button class="btn-primary btn-sm cat-save">✓</button>
+          <button class="btn-ghost   btn-sm cat-cancel">✕</button>
+        </div>
+      `;
+      const nameInput = li.querySelector('.cat-edit-name');
+      nameInput.focus();
+      nameInput.select();
+
+      const save = () => {
+        const newName  = nameInput.value.trim();
+        const newColor = li.querySelector('.cat-edit-color').value;
+        if (!newName) return;
+        const idx = state.categories.findIndex(c => c.id === cat.id);
+        if (idx !== -1) { state.categories[idx].name = newName; state.categories[idx].color = newColor; }
+        saveState(); renderAll();
+      };
+
+      li.querySelector('.cat-save').addEventListener('click', save);
+      li.querySelector('.cat-cancel').addEventListener('click', showView);
+      nameInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  save();
+        if (e.key === 'Escape') showView();
+      });
+    }
+
+    showView();
     ul.appendChild(li);
   });
 
