@@ -59,19 +59,20 @@
         <!-- Matériel -->
         <div class="admin-card">
           <h3>Matériel</h3>
+          <!-- Ajouter un type + générer N unités -->
           <form id="form-add-item">
             <input type="text" id="input-item-name" placeholder="Nom du matériel" required />
             <select id="input-item-cat" required>
               <option value="">— Catégorie —</option>
             </select>
-            <input type="number" id="input-item-qty" placeholder="Qté" min="1" value="1" required />
+            <input type="number" id="input-item-qty" placeholder="Qté" min="1" value="1" required title="Nombre d'unités à créer" />
             <button type="submit" class="btn-primary">Ajouter</button>
           </form>
 
-          <!-- Accordion liste matériel -->
+          <!-- Accordion liste des types -->
           <div class="accordion">
             <button type="button" id="items-accordion-toggle" class="accordion-toggle">
-              <span>Liste — <span id="items-accordion-count">0</span> matériel(s)</span>
+              <span>Types — <span id="items-accordion-count">0</span></span>
               <span id="items-accordion-arrow" class="accordion-arrow">▶</span>
             </button>
             <ul id="items-accordion-body" class="items-accordion-list hidden"></ul>
@@ -110,10 +111,9 @@
         <ul id="detail-assigned-list"></ul>
 
         <div class="detail-assign-zone">
-          <h4>Assigner du matériel</h4>
+          <h4>Assigner une unité</h4>
           <div class="assign-form">
-            <select id="detail-assign-select"><option value="">— Matériel —</option></select>
-            <input type="number" id="detail-assign-qty" min="1" value="1" />
+            <select id="detail-assign-select"><option value="">— Sélectionner une unité —</option></select>
             <button class="btn-primary" id="btn-detail-do-assign">Assigner</button>
           </div>
         </div>
