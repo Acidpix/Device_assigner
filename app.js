@@ -1,50 +1,28 @@
 // ── State ──────────────────────────────────────────────────────────────────
 // Modèle v2 : items = types de matériel, units = unités individuelles
 // assignments : { pointId, unitId }  (pas de quantité, 1 entrée par unité)
+// Stockage : API serveur  GET/POST /api/state
 
-const DB_KEY = 'solidays_v2';
-
-function loadState() {
+async function loadState() {
   try {
-    const raw = localStorage.getItem(DB_KEY);
-    if (raw) return JSON.parse(raw);
+    const res = await fetch('/api/state');
+    if (res.ok) {
+      const data = await res.json();
+      if (data) return data;
+    }
   } catch (_) {}
   return { categories: [], items: [], units: [], points: [], assignments: [] };
 }
 
 function saveState() {
-  localStorage.setItem(DB_KEY, JSON.stringify(state));
+  fetch('/api/state', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(state),
+  }).catch(() => {});
 }
 
-let state = loadState();
-
-if (!state.categories.length) {
-  state.categories = [
-    { id: uid(), name: 'Audio',     color: '#7c5cfc' },
-    { id: uid(), name: 'Éclairage', color: '#f9a825' },
-    { id: uid(), name: 'Vidéo',     color: '#00b894' },
-  ];
-  const defs = [
-    { name: 'Console de mixage', ci: 0, n: 4  },
-    { name: 'Micro HF',          ci: 0, n: 12 },
-    { name: 'Retour de scène',   ci: 0, n: 8  },
-    { name: 'PAR LED 64',        ci: 1, n: 20 },
-    { name: 'Moving head',       ci: 1, n: 6  },
-    { name: 'Projecteur 2K',     ci: 2, n: 3  },
-  ];
-  state.items = defs.map(d => ({ id: uid(), name: d.name, catId: state.categories[d.ci].id }));
-  state.units = [];
-  defs.forEach((d, i) => {
-    for (let k = 1; k <= d.n; k++) {
-      state.units.push({ id: uid(), itemId: state.items[i].id, name: `${d.name} #${k}` });
-    }
-  });
-  state.points = [
-    { id: uid(), name: 'Scène Principale', desc: 'Grande scène extérieure' },
-    { id: uid(), name: 'Scène 2',          desc: 'Scène indoor' },
-  ];
-  saveState();
-}
+let state;
 
 // ── Utils ──────────────────────────────────────────────────────────────────
 
@@ -651,4 +629,36 @@ document.getElementById('overlay').addEventListener('click', () => {
 });
 
 // ── Init ────────────────────────────────────────────────────────────────────
-renderAll();
+(async () => {
+  state = await loadState();
+
+  if (!state.categories.length) {
+    state.categories = [
+      { id: uid(), name: 'Audio',     color: '#7c5cfc' },
+      { id: uid(), name: 'Éclairage', color: '#f9a825' },
+      { id: uid(), name: 'Vidéo',     color: '#00b894' },
+    ];
+    const defs = [
+      { name: 'Console de mixage', ci: 0, n: 4  },
+      { name: 'Micro HF',          ci: 0, n: 12 },
+      { name: 'Retour de scène',   ci: 0, n: 8  },
+      { name: 'PAR LED 64',        ci: 1, n: 20 },
+      { name: 'Moving head',       ci: 1, n: 6  },
+      { name: 'Projecteur 2K',     ci: 2, n: 3  },
+    ];
+    state.items = defs.map(d => ({ id: uid(), name: d.name, catId: state.categories[d.ci].id }));
+    state.units = [];
+    defs.forEach((d, i) => {
+      for (let k = 1; k <= d.n; k++) {
+        state.units.push({ id: uid(), itemId: state.items[i].id, name: `${d.name} #${k}` });
+      }
+    });
+    state.points = [
+      { id: uid(), name: 'Scène Principale', desc: 'Grande scène extérieure' },
+      { id: uid(), name: 'Scène 2',          desc: 'Scène indoor' },
+    ];
+    saveState();
+  }
+
+  renderAll();
+})();
