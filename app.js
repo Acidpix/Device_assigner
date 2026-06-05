@@ -16,24 +16,23 @@ function saveState() {
 
 let state = loadState();
 
-// Seed demo data on first load
 if (!state.categories.length) {
   state.categories = [
-    { id: uid(), name: 'Audio', color: '#7c5cfc' },
+    { id: uid(), name: 'Audio',     color: '#7c5cfc' },
     { id: uid(), name: 'Éclairage', color: '#f9a825' },
-    { id: uid(), name: 'Vidéo', color: '#00b894' },
+    { id: uid(), name: 'Vidéo',     color: '#00b894' },
   ];
   state.items = [
     { id: uid(), name: 'Console de mixage', catId: state.categories[0].id, qty: 4 },
-    { id: uid(), name: 'Micro HF', catId: state.categories[0].id, qty: 12 },
-    { id: uid(), name: 'Retour de scène', catId: state.categories[0].id, qty: 8 },
-    { id: uid(), name: 'PAR LED 64', catId: state.categories[1].id, qty: 20 },
-    { id: uid(), name: 'Moving head', catId: state.categories[1].id, qty: 6 },
-    { id: uid(), name: 'Projecteur 2K', catId: state.categories[2].id, qty: 3 },
+    { id: uid(), name: 'Micro HF',          catId: state.categories[0].id, qty: 12 },
+    { id: uid(), name: 'Retour de scène',   catId: state.categories[0].id, qty: 8 },
+    { id: uid(), name: 'PAR LED 64',        catId: state.categories[1].id, qty: 20 },
+    { id: uid(), name: 'Moving head',       catId: state.categories[1].id, qty: 6 },
+    { id: uid(), name: 'Projecteur 2K',     catId: state.categories[2].id, qty: 3 },
   ];
   state.points = [
     { id: uid(), name: 'Scène Principale', desc: 'Grande scène extérieure' },
-    { id: uid(), name: 'Scène 2', desc: 'Scène indoor' },
+    { id: uid(), name: 'Scène 2',          desc: 'Scène indoor' },
   ];
   saveState();
 }
@@ -44,11 +43,10 @@ function uid() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-function getCat(id) { return state.categories.find(c => c.id === id); }
-function getItem(id) { return state.items.find(i => i.id === id); }
+function getCat(id)   { return state.categories.find(c => c.id === id); }
+function getItem(id)  { return state.items.find(i => i.id === id); }
 function getPoint(id) { return state.points.find(p => p.id === id); }
 
-/** Quantité encore disponible en réserve pour un item */
 function reserveQty(itemId) {
   const item = getItem(itemId);
   if (!item) return 0;
@@ -56,12 +54,6 @@ function reserveQty(itemId) {
     .filter(a => a.itemId === itemId)
     .reduce((s, a) => s + a.qty, 0);
   return item.qty - assigned;
-}
-
-/** Quantité assignée à un point pour un item */
-function pointAssignedQty(pointId, itemId) {
-  const a = state.assignments.find(a => a.pointId === pointId && a.itemId === itemId);
-  return a ? a.qty : 0;
 }
 
 // ── Render: Réserve ────────────────────────────────────────────────────────
@@ -84,7 +76,7 @@ function renderReserve() {
     const catItems = state.items.filter(i => i.catId === cat.id);
     if (!catItems.length) return;
 
-    const totalQty = catItems.reduce((s, i) => s + i.qty, 0);
+    const totalQty     = catItems.reduce((s, i) => s + i.qty, 0);
     const totalReserve = catItems.reduce((s, i) => s + reserveQty(i.id), 0);
 
     const block = document.createElement('div');
@@ -95,15 +87,15 @@ function renderReserve() {
         <h3>${cat.name}</h3>
         <span class="cat-total">Réserve : <span>${totalReserve}</span> / ${totalQty}</span>
       </div>
-      <div class="items-grid" id="items-grid-${cat.id}"></div>
+      <div class="items-grid"></div>
     `;
     container.appendChild(block);
 
     const grid = block.querySelector('.items-grid');
     catItems.forEach(item => {
       const avail = reserveQty(item.id);
-      const pct = item.qty > 0 ? Math.round((avail / item.qty) * 100) : 0;
-      const card = document.createElement('div');
+      const pct   = item.qty > 0 ? Math.round((avail / item.qty) * 100) : 0;
+      const card  = document.createElement('div');
       card.className = 'item-card';
       card.innerHTML = `
         <div class="item-card-name">${item.name}</div>
@@ -133,9 +125,12 @@ function renderPoints() {
   state.points.forEach(point => {
     const card = document.createElement('div');
     card.className = 'point-card';
+    card.setAttribute('role', 'button');
+    card.tabIndex = 0;
 
-    // Build summary tags (one per category represented)
     const assignedItems = state.assignments.filter(a => a.pointId === point.id);
+
+    // Résumé par catégorie
     let summaryHtml = '';
     if (assignedItems.length) {
       const byCat = {};
@@ -152,49 +147,33 @@ function renderPoints() {
       summaryHtml = '<span class="point-empty">Aucun matériel assigné</span>';
     }
 
-    // Tooltip detail
-    let tooltipHtml = '';
-    if (assignedItems.length) {
-      tooltipHtml = assignedItems.map(a => {
-        const item = getItem(a.itemId);
-        const cat = item ? getCat(item.catId) : null;
-        if (!item) return '';
-        return `<div class="tooltip-item">
-          <span>${item.name}</span>
-          ${cat ? `<span class="tooltip-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
-          <strong>×${a.qty}</strong>
-        </div>`;
-      }).join('');
-    } else {
-      tooltipHtml = '<div style="color:var(--text-muted);font-size:.85rem">Aucun matériel assigné</div>';
-    }
+    // Tooltip survol
+    let tooltipHtml = assignedItems.length
+      ? assignedItems.map(a => {
+          const item = getItem(a.itemId);
+          const cat  = item ? getCat(item.catId) : null;
+          if (!item) return '';
+          return `<div class="tooltip-item">
+            <span>${item.name}</span>
+            ${cat ? `<span class="tooltip-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
+            <strong>×${a.qty}</strong>
+          </div>`;
+        }).join('')
+      : '<div style="color:var(--text-muted);font-size:.85rem">Aucun matériel assigné</div>';
 
     card.innerHTML = `
       <div class="point-card-header">
         <span class="point-card-name">${point.name}</span>
-        <div class="point-card-actions">
-          <button class="btn-ghost btn-assign" data-id="${point.id}">Assigner</button>
-          <button class="btn-danger btn-delete-point" data-id="${point.id}">✕</button>
-        </div>
+        <span class="point-click-hint">↗ détails</span>
       </div>
       ${point.desc ? `<div class="point-card-desc">${point.desc}</div>` : ''}
       <div class="point-summary">${summaryHtml}</div>
       <div class="point-tooltip">${tooltipHtml}</div>
     `;
 
-    card.querySelector('.btn-assign').addEventListener('click', e => {
-      e.stopPropagation();
-      openAssignModal(point.id);
-    });
-    card.querySelector('.btn-delete-point').addEventListener('click', e => {
-      e.stopPropagation();
-      if (confirm(`Supprimer le point « ${point.name} » ? Tout le matériel retournera en réserve.`)) {
-        state.assignments = state.assignments.filter(a => a.pointId !== point.id);
-        state.points = state.points.filter(p => p.id !== point.id);
-        saveState();
-        renderPoints();
-        renderReserve();
-      }
+    card.addEventListener('click', () => openPointDetail(point.id));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') openPointDetail(point.id);
     });
 
     grid.appendChild(card);
@@ -204,7 +183,7 @@ function renderPoints() {
 // ── Render: Admin ──────────────────────────────────────────────────────────
 
 function renderAdmin() {
-  // Categories list
+  // Catégories
   const ul = document.getElementById('list-categories');
   ul.innerHTML = '';
   state.categories.forEach(cat => {
@@ -221,40 +200,113 @@ function renderAdmin() {
       if (hasItems && !confirm(`La catégorie « ${cat.name} » contient du matériel. Tout supprimer ?`)) return;
       const itemIds = state.items.filter(i => i.catId === cat.id).map(i => i.id);
       state.assignments = state.assignments.filter(a => !itemIds.includes(a.itemId));
-      state.items = state.items.filter(i => i.catId !== cat.id);
-      state.categories = state.categories.filter(c => c.id !== cat.id);
+      state.items       = state.items.filter(i => i.catId !== cat.id);
+      state.categories  = state.categories.filter(c => c.id !== cat.id);
       saveState();
       renderAll();
     });
     ul.appendChild(li);
   });
 
-  // Items list
-  const ul2 = document.getElementById('list-items');
-  ul2.innerHTML = '';
-  state.items.forEach(item => {
-    const cat = getCat(item.catId);
-    const avail = reserveQty(item.id);
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <div class="admin-list-info">
-        ${cat ? `<span class="cat-dot" style="background:${cat.color}"></span>` : ''}
-        <span>${item.name}</span>
-        <span class="admin-list-meta">${cat ? cat.name : '—'} · ${avail}/${item.qty} dispo</span>
-      </div>
-      <button class="btn-danger btn-del-item" data-id="${item.id}">Supprimer</button>
-    `;
-    li.querySelector('.btn-del-item').addEventListener('click', () => {
-      if (!confirm(`Supprimer « ${item.name} » ?`)) return;
-      state.assignments = state.assignments.filter(a => a.itemId !== item.id);
-      state.items = state.items.filter(i => i.id !== item.id);
-      saveState();
-      renderAll();
-    });
-    ul2.appendChild(li);
-  });
+  // Matériel — accordion
+  const count = document.getElementById('items-accordion-count');
+  count.textContent = state.items.length;
 
-  // Populate selects
+  const list = document.getElementById('items-accordion-body');
+  list.innerHTML = '';
+
+  if (!state.items.length) {
+    const li = document.createElement('li');
+    li.className = 'admin-list-empty';
+    li.textContent = 'Aucun matériel ajouté.';
+    list.appendChild(li);
+  } else {
+    state.items.forEach(item => {
+      const cat         = getCat(item.catId);
+      const avail       = reserveQty(item.id);
+      const assignedQty = item.qty - avail;
+
+      const li = document.createElement('li');
+      li.className = 'item-accordion-row';
+      li.dataset.id = item.id;
+
+      li.innerHTML = `
+        <div class="item-row-summary">
+          ${cat ? `<span class="cat-dot" style="background:${cat.color}"></span>` : ''}
+          <span class="item-row-name">${item.name}</span>
+          <span class="item-row-cat">${cat ? cat.name : '—'}</span>
+          <span class="item-row-qty"><strong>${avail}</strong>/${item.qty}</span>
+          <button type="button" class="btn-ghost item-row-edit-btn" title="Modifier">✎</button>
+        </div>
+        <div class="item-row-edit hidden">
+          <div class="item-edit-fields">
+            <input type="text"   class="item-edit-name" value="${item.name.replace(/"/g, '&quot;')}" placeholder="Nom" />
+            <select class="item-edit-cat">
+              ${state.categories.map(c =>
+                `<option value="${c.id}"${c.id === item.catId ? ' selected' : ''}>${c.name}</option>`
+              ).join('')}
+            </select>
+            <input type="number" class="item-edit-qty" value="${item.qty}" min="${Math.max(1, assignedQty)}" />
+          </div>
+          ${assignedQty > 0 ? `<div class="item-edit-qty-hint">Min. ${assignedQty} (déjà assigné)</div>` : ''}
+          <div class="item-edit-actions">
+            <button type="button" class="btn-primary item-edit-save">Sauvegarder</button>
+            <button type="button" class="btn-ghost item-edit-cancel">Annuler</button>
+            <button type="button" class="btn-danger item-edit-delete">Supprimer</button>
+          </div>
+        </div>
+      `;
+
+      // Ouvrir / fermer l'édition
+      li.querySelector('.item-row-edit-btn').addEventListener('click', () => {
+        const editRow = li.querySelector('.item-row-edit');
+        const isOpen  = !editRow.classList.contains('hidden');
+        // Fermer tous les autres
+        document.querySelectorAll('.item-row-edit').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.item-accordion-row').forEach(el => el.classList.remove('open'));
+        if (!isOpen) {
+          editRow.classList.remove('hidden');
+          li.classList.add('open');
+          li.querySelector('.item-edit-name').focus();
+        }
+      });
+
+      // Sauvegarder
+      li.querySelector('.item-edit-save').addEventListener('click', () => {
+        const newName = li.querySelector('.item-edit-name').value.trim();
+        const newCat  = li.querySelector('.item-edit-cat').value;
+        const newQty  = parseInt(li.querySelector('.item-edit-qty').value, 10);
+        if (!newName || !newCat || !newQty || newQty < 1) return;
+        if (newQty < assignedQty) {
+          alert(`Impossible : ${assignedQty} unité(s) déjà assignée(s) à des points.`);
+          return;
+        }
+        const idx = state.items.findIndex(i => i.id === item.id);
+        if (idx !== -1) state.items[idx] = { ...state.items[idx], name: newName, catId: newCat, qty: newQty };
+        saveState();
+        renderAll();
+      });
+
+      // Annuler
+      li.querySelector('.item-edit-cancel').addEventListener('click', () => {
+        li.querySelector('.item-row-edit').classList.add('hidden');
+        li.classList.remove('open');
+      });
+
+      // Supprimer
+      li.querySelector('.item-edit-delete').addEventListener('click', () => {
+        if (!confirm(`Supprimer « ${item.name} » ? Le matériel assigné sera retiré de tous les points.`)) return;
+        state.assignments = state.assignments.filter(a => a.itemId !== item.id);
+        state.items       = state.items.filter(i => i.id !== item.id);
+        saveState();
+        renderAll();
+      });
+
+      list.appendChild(li);
+    });
+  }
+
+  // Select catégorie du formulaire d'ajout
   const catSelect = document.getElementById('input-item-cat');
   catSelect.innerHTML = '<option value="">— Catégorie —</option>';
   state.categories.forEach(c => {
@@ -265,7 +317,7 @@ function renderAdmin() {
   });
 }
 
-// ── Populate filter + assign selects ──────────────────────────────────────
+// ── Reserve filter ─────────────────────────────────────────────────────────
 
 function populateReserveFilter() {
   const sel = document.getElementById('reserve-filter-cat');
@@ -280,66 +332,95 @@ function populateReserveFilter() {
   sel.value = cur;
 }
 
-function populateAssignSelect(pointId) {
-  const sel = document.getElementById('assign-item-select');
-  sel.innerHTML = '<option value="">— Matériel —</option>';
-  state.items.forEach(item => {
-    const avail = reserveQty(item.id);
-    if (avail <= 0) return;
-    const cat = getCat(item.catId);
-    const opt = document.createElement('option');
-    opt.value = item.id;
-    opt.textContent = `${item.name}${cat ? ' [' + cat.name + ']' : ''} — ${avail} dispo`;
-    sel.appendChild(opt);
-  });
-}
-
-// ── Modal: Assign ──────────────────────────────────────────────────────────
+// ── Point Detail Modal ─────────────────────────────────────────────────────
 
 let activePointId = null;
+let detailMode    = 'view';
 
-function openAssignModal(pointId) {
+function openPointDetail(pointId) {
   activePointId = pointId;
-  const point = getPoint(pointId);
-  document.getElementById('modal-assign-title').textContent = `Assigner — ${point.name}`;
-  populateAssignSelect(pointId);
-  renderAssignedList(pointId);
-  document.getElementById('modal-assign').classList.remove('hidden');
+  detailMode    = 'view';
+  renderDetailModal();
+  document.getElementById('modal-point-detail').classList.remove('hidden');
   document.getElementById('overlay').classList.remove('hidden');
 }
 
-function closeAssignModal() {
-  document.getElementById('modal-assign').classList.add('hidden');
+function closePointDetail() {
+  document.getElementById('modal-point-detail').classList.add('hidden');
   document.getElementById('overlay').classList.add('hidden');
   activePointId = null;
 }
 
-function renderAssignedList(pointId) {
-  const ul = document.getElementById('modal-assigned-list');
-  ul.innerHTML = '';
-  const assigned = state.assignments.filter(a => a.pointId === pointId);
+function setDetailMode(mode) {
+  detailMode = mode;
+  renderDetailModal();
+}
+
+function renderDetailModal() {
+  const point = getPoint(activePointId);
+  if (!point) return;
+
+  const viewHeader = document.getElementById('detail-view-header');
+  const editHeader = document.getElementById('detail-edit-header');
+  const viewBody   = document.getElementById('detail-view-body');
+  const editBody   = document.getElementById('detail-edit-body');
+
+  if (detailMode === 'view') {
+    viewHeader.classList.remove('hidden');
+    editHeader.classList.add('hidden');
+    viewBody.classList.remove('hidden');
+    editBody.classList.add('hidden');
+
+    document.getElementById('detail-point-name').textContent = point.name;
+    const descEl = document.getElementById('detail-point-desc');
+    descEl.textContent  = point.desc || '';
+    descEl.style.display = point.desc ? '' : 'none';
+
+    renderDetailAssignedList();
+    populateDetailAssignSelect();
+  } else {
+    viewHeader.classList.add('hidden');
+    editHeader.classList.remove('hidden');
+    viewBody.classList.add('hidden');
+    editBody.classList.remove('hidden');
+
+    document.getElementById('edit-point-name').value = point.name;
+    document.getElementById('edit-point-desc').value = point.desc || '';
+  }
+}
+
+function renderDetailAssignedList() {
+  const ul       = document.getElementById('detail-assigned-list');
+  ul.innerHTML   = '';
+  const assigned = state.assignments.filter(a => a.pointId === activePointId);
+
   if (!assigned.length) {
-    ul.innerHTML = '<li style="color:var(--text-muted);font-size:.85rem;padding:8px 0">Aucun matériel assigné à ce point.</li>';
+    const li = document.createElement('li');
+    li.className   = 'detail-empty';
+    li.textContent = 'Aucun matériel assigné à ce point.';
+    ul.appendChild(li);
     return;
   }
+
   assigned.forEach(a => {
     const item = getItem(a.itemId);
-    const cat = item ? getCat(item.catId) : null;
+    const cat  = item ? getCat(item.catId) : null;
     if (!item) return;
+
     const li = document.createElement('li');
     li.className = 'assigned-row';
     li.innerHTML = `
       <span class="assigned-row-name">${item.name}</span>
       ${cat ? `<span class="assigned-row-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
       <span class="assigned-row-qty">×${a.qty}</span>
-      <button class="btn-danger btn-return" data-item="${a.itemId}" data-point="${pointId}">Retirer</button>
+      <button class="btn-danger btn-return">Retirer</button>
     `;
     li.querySelector('.btn-return').addEventListener('click', () => {
-      const idx = state.assignments.findIndex(x => x.pointId === pointId && x.itemId === a.itemId);
+      const idx = state.assignments.findIndex(x => x.pointId === activePointId && x.itemId === a.itemId);
       if (idx !== -1) state.assignments.splice(idx, 1);
       saveState();
-      renderAssignedList(pointId);
-      populateAssignSelect(pointId);
+      renderDetailAssignedList();
+      populateDetailAssignSelect();
       renderReserve();
       renderPoints();
     });
@@ -347,7 +428,21 @@ function renderAssignedList(pointId) {
   });
 }
 
-// ── Modal: Add Point ───────────────────────────────────────────────────────
+function populateDetailAssignSelect() {
+  const sel    = document.getElementById('detail-assign-select');
+  sel.innerHTML = '<option value="">— Matériel —</option>';
+  state.items.forEach(item => {
+    const avail = reserveQty(item.id);
+    if (avail <= 0) return;
+    const cat = getCat(item.catId);
+    const opt = document.createElement('option');
+    opt.value       = item.id;
+    opt.textContent = `${item.name}${cat ? ' [' + cat.name + ']' : ''} — ${avail} dispo`;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Modal: Ajouter un point ────────────────────────────────────────────────
 
 function openAddPointModal() {
   document.getElementById('input-point-name').value = '';
@@ -373,7 +468,7 @@ function renderAll() {
 
 // ── Events ─────────────────────────────────────────────────────────────────
 
-// Tab navigation
+// Navigation tabs
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -383,13 +478,13 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
   });
 });
 
-// Reserve filter
+// Filtre réserve
 document.getElementById('reserve-filter-cat').addEventListener('change', renderReserve);
 
-// Add category
+// Ajouter catégorie
 document.getElementById('form-add-category').addEventListener('submit', e => {
   e.preventDefault();
-  const name = document.getElementById('input-cat-name').value.trim();
+  const name  = document.getElementById('input-cat-name').value.trim();
   const color = document.getElementById('input-cat-color').value;
   if (!name) return;
   state.categories.push({ id: uid(), name, color });
@@ -398,24 +493,40 @@ document.getElementById('form-add-category').addEventListener('submit', e => {
   renderAll();
 });
 
-// Add item
+// Ajouter matériel
 document.getElementById('form-add-item').addEventListener('submit', e => {
   e.preventDefault();
-  const name = document.getElementById('input-item-name').value.trim();
+  const name  = document.getElementById('input-item-name').value.trim();
   const catId = document.getElementById('input-item-cat').value;
-  const qty = parseInt(document.getElementById('input-item-qty').value, 10);
+  const qty   = parseInt(document.getElementById('input-item-qty').value, 10);
   if (!name || !catId || !qty || qty < 1) return;
   state.items.push({ id: uid(), name, catId, qty });
   saveState();
-  document.getElementById('input-item-name').value = '';
-  document.getElementById('input-item-qty').value = '1';
+  document.getElementById('input-item-name').value  = '';
+  document.getElementById('input-item-qty').value   = '1';
+  // Ouvrir l'accordion si fermé
+  const body  = document.getElementById('items-accordion-body');
+  const arrow = document.getElementById('items-accordion-arrow');
+  const toggle = document.getElementById('items-accordion-toggle');
+  if (body.classList.contains('hidden')) {
+    body.classList.remove('hidden');
+    toggle.classList.add('open');
+  }
   renderAll();
 });
 
-// Add point button
+// Accordion matériel
+document.getElementById('items-accordion-toggle').addEventListener('click', () => {
+  const body   = document.getElementById('items-accordion-body');
+  const toggle = document.getElementById('items-accordion-toggle');
+  const isOpen = !body.classList.contains('hidden');
+  body.classList.toggle('hidden', isOpen);
+  toggle.classList.toggle('open', !isOpen);
+});
+
+// Ajouter un point
 document.getElementById('btn-add-point').addEventListener('click', openAddPointModal);
 document.getElementById('btn-close-add-point').addEventListener('click', closeAddPointModal);
-
 document.getElementById('form-add-point').addEventListener('submit', e => {
   e.preventDefault();
   const name = document.getElementById('input-point-name').value.trim();
@@ -427,11 +538,48 @@ document.getElementById('form-add-point').addEventListener('submit', e => {
   renderPoints();
 });
 
-// Assign modal
-document.getElementById('btn-modal-close').addEventListener('click', closeAssignModal);
-document.getElementById('btn-do-assign').addEventListener('click', () => {
-  const itemId = document.getElementById('assign-item-select').value;
-  const qty = parseInt(document.getElementById('assign-qty').value, 10);
+// Modal détail point — fermer (vue)
+document.getElementById('btn-detail-close').addEventListener('click', closePointDetail);
+
+// Modal détail point — passer en mode édition
+document.getElementById('btn-detail-edit').addEventListener('click', () => setDetailMode('edit'));
+
+// Modal détail point — annuler édition (× en-tête edit)
+document.getElementById('btn-detail-edit-close').addEventListener('click', () => setDetailMode('view'));
+
+// Modal détail point — annuler édition (bouton Annuler dans le corps)
+document.getElementById('btn-edit-cancel').addEventListener('click', () => setDetailMode('view'));
+
+// Modal détail point — sauvegarder édition
+document.getElementById('form-edit-point').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('edit-point-name').value.trim();
+  const desc = document.getElementById('edit-point-desc').value.trim();
+  if (!name || !activePointId) return;
+  const idx = state.points.findIndex(p => p.id === activePointId);
+  if (idx !== -1) state.points[idx] = { ...state.points[idx], name, desc };
+  saveState();
+  renderPoints();
+  setDetailMode('view');
+});
+
+// Modal détail point — supprimer le point
+document.getElementById('btn-delete-point').addEventListener('click', () => {
+  const point = getPoint(activePointId);
+  if (!point) return;
+  if (!confirm(`Supprimer le point « ${point.name} » ? Tout le matériel retournera en réserve.`)) return;
+  state.assignments = state.assignments.filter(a => a.pointId !== activePointId);
+  state.points      = state.points.filter(p => p.id !== activePointId);
+  saveState();
+  closePointDetail();
+  renderPoints();
+  renderReserve();
+});
+
+// Modal détail point — assigner
+document.getElementById('btn-detail-do-assign').addEventListener('click', () => {
+  const itemId = document.getElementById('detail-assign-select').value;
+  const qty    = parseInt(document.getElementById('detail-assign-qty').value, 10);
   if (!itemId || !qty || qty < 1 || !activePointId) return;
 
   const avail = reserveQty(itemId);
@@ -447,16 +595,16 @@ document.getElementById('btn-do-assign').addEventListener('click', () => {
     state.assignments.push({ pointId: activePointId, itemId, qty });
   }
   saveState();
-  renderAssignedList(activePointId);
-  populateAssignSelect(activePointId);
+  renderDetailAssignedList();
+  populateDetailAssignSelect();
   renderReserve();
   renderPoints();
-  document.getElementById('assign-qty').value = '1';
+  document.getElementById('detail-assign-qty').value = '1';
 });
 
-// Close modals on overlay click
+// Fermer les modals en cliquant sur l'overlay
 document.getElementById('overlay').addEventListener('click', () => {
-  closeAssignModal();
+  closePointDetail();
   closeAddPointModal();
 });
 
