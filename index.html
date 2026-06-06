@@ -70,9 +70,16 @@
       <div class="section-header">
         <h2>Points de distribution</h2>
         <div style="display:flex;gap:8px">
-          <button class="btn-ghost btn-sm" id="btn-toggle-points-view" title="Basculer vue">⊞ Liste</button>
+          <button class="btn-ghost btn-sm" id="btn-toggle-points-view" title="Basculer vue">≣ Liste</button>
           <button class="btn-primary" id="btn-add-point">+ Ajouter un point</button>
         </div>
+      </div>
+      <div class="points-legend">
+        <div class="legend-item"><span class="legend-dot gris"></span>Aucune configuration</div>
+        <div class="legend-item"><span class="legend-dot jaune"></span>Configuration partielle</div>
+        <div class="legend-item"><span class="legend-dot bleu"></span>Tout configuré</div>
+        <div class="legend-item"><span class="legend-dot vert"></span>Tout configuré + dans le sac</div>
+        <div class="legend-item"><span class="legend-dot rouge"></span>Dans le sac, config incomplète</div>
       </div>
       <div id="points-grid"></div>
     </section>

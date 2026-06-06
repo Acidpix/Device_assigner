@@ -304,27 +304,36 @@ function renderBagChecker() {
     assigned.forEach(a => {
       const unit = getUnit(a.unitId);
       if (!unit) return;
-      const item = getItem(unit.itemId);
-      const cat = item ? getCat(item.catId) : null;
 
       const li = document.createElement('li');
       li.className = 'bag-item';
-      li.innerHTML = `
-        <span class="bag-item-name">${unit.name}</span>
-        <span class="bag-item-config ${a.configured ? 'done' : ''}">⚙ ${a.configured ? '✓' : '✗'}</span>
-        <input type="checkbox" class="bag-item-checkbox" ${a.inBag ? 'checked' : ''} />
-      `;
 
-      li.querySelector('.bag-item-checkbox').addEventListener('change', e => {
+      const btn = document.createElement('button');
+      btn.className = 'bag-btn' + (a.inBag ? ' checked' : '');
+      btn.textContent = '🎒';
+      btn.title = a.inBag ? 'Dans le sac' : 'Pas dans le sac';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'bag-item-name';
+      nameSpan.textContent = unit.name;
+
+      const badge = document.createElement('span');
+      badge.className = 'bag-item-config-badge ' + (a.configured ? 'ok' : 'nok');
+      badge.textContent = a.configured ? 'Config OK' : 'Config NOK';
+
+      btn.addEventListener('click', () => {
         const idx = state.assignments.findIndex(x => x.unitId === unit.id);
         if (idx !== -1) {
-          state.assignments[idx].inBag = e.target.checked;
+          state.assignments[idx].inBag = !state.assignments[idx].inBag;
           saveState();
           renderBagChecker();
           renderPoints();
         }
       });
 
+      li.appendChild(btn);
+      li.appendChild(nameSpan);
+      li.appendChild(badge);
       itemsList.appendChild(li);
     });
   }
@@ -335,7 +344,7 @@ function renderBagChecker() {
 
   if (!state.essentials.length) {
     const li = document.createElement('li');
-    li.textContent = 'Aucun indispensable configuré';
+    li.textContent = 'Aucun indispensable configuré (Administration → Indispensables)';
     li.style.color = 'var(--text-muted)';
     li.style.padding = '8px 0';
     essentialsList.appendChild(li);
@@ -345,21 +354,27 @@ function renderBagChecker() {
     }
 
     state.essentials.forEach(ess => {
+      const checked = !!state.pointBagConfigs[pointId][ess.id];
       const li = document.createElement('li');
       li.className = 'bag-item';
-      li.innerHTML = `
-        <span class="bag-item-name">${ess.name}</span>
-        <input type="checkbox" class="bag-item-checkbox essential-checkbox" data-essential-id="${ess.id}" ${state.pointBagConfigs[pointId][ess.id] ? 'checked' : ''} />
-      `;
 
-      li.querySelector('.essential-checkbox').addEventListener('change', e => {
-        if (!state.pointBagConfigs[pointId]) {
-          state.pointBagConfigs[pointId] = {};
-        }
-        state.pointBagConfigs[pointId][ess.id] = e.target.checked;
+      const btn = document.createElement('button');
+      btn.className = 'bag-btn' + (checked ? ' checked' : '');
+      btn.textContent = '🎒';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'bag-item-name';
+      nameSpan.textContent = ess.name;
+
+      btn.addEventListener('click', () => {
+        if (!state.pointBagConfigs[pointId]) state.pointBagConfigs[pointId] = {};
+        state.pointBagConfigs[pointId][ess.id] = !state.pointBagConfigs[pointId][ess.id];
         saveState();
+        btn.classList.toggle('checked', state.pointBagConfigs[pointId][ess.id]);
       });
 
+      li.appendChild(btn);
+      li.appendChild(nameSpan);
       essentialsList.appendChild(li);
     });
   }
@@ -759,29 +774,33 @@ function renderDetailAssignedList() {
     const li = document.createElement('li');
     li.className = 'assigned-row';
     li.innerHTML = `
-      <span class="assigned-row-name">${unit.name}</span>
-      ${cat ? `<span class="assigned-row-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
       <div class="assigned-row-checks">
-        <label class="check-label" title="Configuration faite">
+        <label class="check-toggle ${a.configured ? 'checked' : ''}" title="Configuration faite">
           <input type="checkbox" class="check-configured" ${a.configured ? 'checked' : ''} />
           ⚙
         </label>
-        <label class="check-label" title="Dans le sac">
+        <label class="check-toggle ${a.inBag ? 'checked' : ''}" title="Dans le sac">
           <input type="checkbox" class="check-in-bag" ${a.inBag ? 'checked' : ''} />
           🎒
         </label>
       </div>
+      <span class="assigned-row-name">${unit.name}</span>
+      ${cat ? `<span class="assigned-row-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
       <button class="btn-danger btn-return">Retirer</button>
     `;
 
     const chkConfigured = li.querySelector('.check-configured');
     const chkInBag = li.querySelector('.check-in-bag');
+    const lblConfigured = chkConfigured.closest('.check-toggle');
+    const lblInBag = chkInBag.closest('.check-toggle');
 
     const persistState = () => {
       const idx = state.assignments.findIndex(x => x.pointId === activePointId && x.unitId === unit.id);
       if (idx !== -1) {
         state.assignments[idx].configured = chkConfigured.checked;
         state.assignments[idx].inBag = chkInBag.checked;
+        lblConfigured.classList.toggle('checked', chkConfigured.checked);
+        lblInBag.classList.toggle('checked', chkInBag.checked);
         saveState();
         updatePointCardColor();
         renderPoints();
