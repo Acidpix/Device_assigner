@@ -330,18 +330,13 @@ function renderBagChecker() {
 
       const nameSpan = document.createElement('span');
       nameSpan.className = 'bag-item-name';
-      nameSpan.textContent = unit.name;
-
-      const metaSpan = document.createElement('span');
-      metaSpan.className = 'bag-item-meta';
-      metaSpan.textContent = [item ? item.name : null, cat ? cat.name : null].filter(Boolean).join(' · ');
+      nameSpan.textContent = [item?.name, unit.name, cat?.name].filter(Boolean).join(' — ');
 
       const badge = document.createElement('span');
       badge.className = 'bag-item-config-badge ' + (a.configured ? 'ok' : 'nok');
       badge.textContent = a.configured ? 'Config OK' : 'Config NOK';
 
       info.appendChild(nameSpan);
-      if (metaSpan.textContent) info.appendChild(metaSpan);
       info.appendChild(badge);
 
       const checkCol = document.createElement('div');
@@ -1062,6 +1057,16 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 document.getElementById('reserve-filter-cat').addEventListener('change', renderReserve);
+
+// Sous-onglets Admin
+document.querySelectorAll('.admin-subtab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.admin-subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.admin-subtab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`admin-subtab-${btn.dataset.subtab}`).classList.add('active');
+  });
+});
 
 // Bag Checker
 document.getElementById('bag-checker-point-select').addEventListener('change', renderBagChecker);

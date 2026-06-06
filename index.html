@@ -94,48 +94,59 @@
 
     <!-- ── TAB: ADMINISTRATION ── -->
     <section id="tab-admin" class="tab">
-      <div class="admin-columns">
+      <div class="section-header">
+        <h2>Administration</h2>
+      </div>
+      <div class="admin-subtabs">
+        <button class="admin-subtab-btn active" data-subtab="reserve">Réserve</button>
+        <button class="admin-subtab-btn" data-subtab="bag-checker">Bag Checker</button>
+      </div>
 
-        <!-- Catégories -->
-        <div class="admin-card">
-          <h3>Catégories</h3>
-          <form id="form-add-category">
-            <input type="text" id="input-cat-name" placeholder="Nom de la catégorie" required />
-            <input type="color" id="input-cat-color" value="#6c5ce7" title="Couleur" />
-            <button type="submit" class="btn-primary">Ajouter</button>
-          </form>
-          <ul id="list-categories" class="admin-list"></ul>
-        </div>
-
-        <!-- Matériel -->
-        <div class="admin-card">
-          <div class="admin-card-header">
-            <h3>Matériel</h3>
-            <button type="button" id="btn-reset-inventory" class="btn-warning btn-sm">↺ Inventaire</button>
+      <!-- Sous-onglet Réserve -->
+      <div id="admin-subtab-reserve" class="admin-subtab-panel active">
+        <div class="admin-columns">
+          <!-- Catégories -->
+          <div class="admin-card">
+            <h3>Catégories</h3>
+            <form id="form-add-category">
+              <input type="text" id="input-cat-name" placeholder="Nom de la catégorie" required />
+              <input type="color" id="input-cat-color" value="#6c5ce7" title="Couleur" />
+              <button type="submit" class="btn-primary">Ajouter</button>
+            </form>
+            <ul id="list-categories" class="admin-list"></ul>
           </div>
-          <!-- Ajouter un type + générer N unités -->
-          <form id="form-add-item">
-            <input type="text" id="input-item-name" placeholder="Nom du matériel" required />
-            <select id="input-item-cat" required>
-              <option value="">— Catégorie —</option>
-            </select>
-            <input type="number" id="input-item-qty" placeholder="Qté" min="1" value="1" required title="Nombre d'unités à créer" />
-            <button type="submit" class="btn-primary">Ajouter</button>
-          </form>
 
-          <ul id="items-accordion-body" class="items-accordion-list"></ul>
+          <!-- Matériel -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h3>Matériel</h3>
+              <button type="button" id="btn-reset-inventory" class="btn-warning btn-sm">↺ Inventaire</button>
+            </div>
+            <form id="form-add-item">
+              <input type="text" id="input-item-name" placeholder="Nom du matériel" required />
+              <select id="input-item-cat" required>
+                <option value="">— Catégorie —</option>
+              </select>
+              <input type="number" id="input-item-qty" placeholder="Qté" min="1" value="1" required title="Nombre d'unités à créer" />
+              <button type="submit" class="btn-primary">Ajouter</button>
+            </form>
+            <ul id="items-accordion-body" class="items-accordion-list"></ul>
+          </div>
         </div>
+      </div>
 
-        <!-- Indispensables -->
-        <div class="admin-card">
-          <h3>Indispensables</h3>
-          <form id="form-add-essential">
-            <input type="text" id="input-essential-name" placeholder="ex : Câble d'alimentation" required />
-            <button type="submit" class="btn-primary">Ajouter</button>
-          </form>
-          <ul id="list-essentials" class="admin-list"></ul>
+      <!-- Sous-onglet Bag Checker -->
+      <div id="admin-subtab-bag-checker" class="admin-subtab-panel">
+        <div class="admin-columns">
+          <div class="admin-card">
+            <h3>Indispensables</h3>
+            <form id="form-add-essential">
+              <input type="text" id="input-essential-name" placeholder="ex : Câble d'alimentation" required />
+              <button type="submit" class="btn-primary">Ajouter</button>
+            </form>
+            <ul id="list-essentials" class="admin-list"></ul>
+          </div>
         </div>
-
       </div>
     </section>
   </main>
