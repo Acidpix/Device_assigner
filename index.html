@@ -16,6 +16,7 @@
       <nav>
         <button class="nav-btn active" data-tab="points">Points</button>
         <button class="nav-btn" data-tab="reserve">Réserve</button>
+        <button class="nav-btn" data-tab="bag-checker">Bag Checker</button>
         <button class="nav-btn" data-tab="admin">Administration</button>
       </nav>
     </div>
@@ -35,11 +36,43 @@
       <div id="reserve-categories"></div>
     </section>
 
+    <!-- ── TAB: BAG CHECKER ── -->
+    <section id="tab-bag-checker" class="tab">
+      <div class="bag-checker-container">
+        <div class="section-header">
+          <h2>Bag Checker</h2>
+        </div>
+
+        <div class="bag-checker-control">
+          <label>Point de distribution:
+            <select id="bag-checker-point-select">
+              <option value="">— Sélectionner un point —</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="bag-checker-content" class="bag-checker-content hidden">
+          <div class="bag-checker-section">
+            <h3>Matériel assigné</h3>
+            <ul id="bag-checker-items" class="bag-checker-list"></ul>
+          </div>
+
+          <div class="bag-checker-section">
+            <h3>Indispensables</h3>
+            <ul id="bag-checker-essentials" class="bag-checker-list"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── TAB: POINTS ── -->
     <section id="tab-points" class="tab active">
       <div class="section-header">
         <h2>Points de distribution</h2>
-        <button class="btn-primary" id="btn-add-point">+ Ajouter un point</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-ghost btn-sm" id="btn-toggle-points-view" title="Basculer vue">⊞ Liste</button>
+          <button class="btn-primary" id="btn-add-point">+ Ajouter un point</button>
+        </div>
       </div>
       <div id="points-grid"></div>
     </section>
@@ -76,6 +109,16 @@
           </form>
 
           <ul id="items-accordion-body" class="items-accordion-list"></ul>
+        </div>
+
+        <!-- Indispensables -->
+        <div class="admin-card">
+          <h3>Indispensables</h3>
+          <form id="form-add-essential">
+            <input type="text" id="input-essential-name" placeholder="ex : Câble d'alimentation" required />
+            <button type="submit" class="btn-primary">Ajouter</button>
+          </form>
+          <ul id="list-essentials" class="admin-list"></ul>
         </div>
 
       </div>

@@ -11,7 +11,7 @@ async function loadState() {
       if (data) return data;
     }
   } catch (_) {}
-  return { categories: [], items: [], units: [], points: [], assignments: [] };
+  return { categories: [], items: [], units: [], points: [], assignments: [], essentials: [], pointBagConfigs: {} };
 }
 
 function saveState() {
@@ -23,6 +23,7 @@ function saveState() {
 }
 
 let state;
+let draggedPointId = null;
 
 // ── Utils ──────────────────────────────────────────────────────────────────
 
@@ -121,6 +122,129 @@ function renderReserve() {
 
 // ── Render: Points ─────────────────────────────────────────────────────────
 
+function togglePointsView() {
+  if (!state.pointsViewMode) state.pointsViewMode = 'cards';
+  state.pointsViewMode = state.pointsViewMode === 'cards' ? 'list' : 'cards';
+  saveState();
+  renderPoints();
+}
+
+function makePointCard(point) {
+  const assignedUnitIds = state.assignments
+    .filter(a => a.pointId === point.id)
+    .map(a => a.unitId);
+  const assignedUnits = state.units.filter(u => assignedUnitIds.includes(u.id));
+
+  let summaryHtml = '';
+  if (assignedUnits.length) {
+    const byCat = {};
+    assignedUnits.forEach(unit => {
+      const item = getItem(unit.itemId);
+      if (!item) return;
+      byCat[item.catId] = (byCat[item.catId] || 0) + 1;
+    });
+    summaryHtml = Object.entries(byCat).map(([catId, qty]) => {
+      const cat = getCat(catId);
+      return cat ? `<span class="point-tag" style="background:${cat.color}">${cat.name} ×${qty}</span>` : '';
+    }).join('');
+  } else {
+    summaryHtml = '<span class="point-empty">Aucun matériel assigné</span>';
+  }
+
+  let tooltipHtml = assignedUnits.length
+    ? assignedUnits.map(unit => {
+        const item = getItem(unit.itemId);
+        const cat  = item ? getCat(item.catId) : null;
+        return `<div class="tooltip-item">
+          <span>${unit.name}</span>
+          ${cat ? `<span class="tooltip-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--text-muted);font-size:.85rem">Aucun matériel assigné</div>';
+
+  const card = document.createElement('div');
+  const stateColor = getPointStateColor(point.id);
+  card.className = `point-card state-${stateColor}`;
+  card.setAttribute('role', 'button');
+  card.tabIndex = 0;
+  card.draggable = true;
+  card.dataset.pointId = point.id;
+
+  card.innerHTML = `
+    <div class="point-card-header">
+      <span class="point-card-name">${point.name}</span>
+      <span class="point-click-hint">↗ détails</span>
+    </div>
+    ${point.desc ? `<div class="point-card-desc">${point.desc}</div>` : ''}
+    <div class="point-summary">${summaryHtml}</div>
+    <div class="point-tooltip">${tooltipHtml}</div>
+  `;
+
+  card.addEventListener('click', () => openPointDetail(point.id));
+  card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openPointDetail(point.id); });
+  attachPointDragListeners(card);
+
+  return card;
+}
+
+function getPointStateColor(pointId) {
+  const assigned = state.assignments.filter(a => a.pointId === pointId);
+  if (!assigned.length) return 'gris';
+
+  const allConfigured = assigned.every(a => a.configured);
+  const allInBag = assigned.every(a => a.inBag);
+  const someConfigured = assigned.some(a => a.configured);
+
+  if (allConfigured && allInBag) return 'vert';
+  if (allInBag && !allConfigured) return 'rouge';
+  if (allConfigured && !allInBag) return 'bleu';
+  if (someConfigured && !allConfigured) return 'jaune';
+  return 'gris';
+}
+
+function updatePointCardColor() {
+  if (!activePointId) return;
+  const color = getPointStateColor(activePointId);
+  document.querySelectorAll('.point-card').forEach(card => {
+    if (card.dataset.pointId === activePointId) {
+      card.className = `point-card state-${color}`;
+    }
+  });
+}
+
+function attachPointDragListeners(el) {
+  el.addEventListener('dragstart', e => {
+    draggedPointId = el.dataset.pointId;
+    el.classList.add('dragging');
+  });
+  el.addEventListener('dragend', () => {
+    el.classList.remove('dragging');
+    draggedPointId = null;
+  });
+  el.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (draggedPointId && draggedPointId !== el.dataset.pointId) {
+      el.classList.add('drag-over');
+    }
+  });
+  el.addEventListener('dragleave', () => {
+    el.classList.remove('drag-over');
+  });
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drag-over');
+    if (draggedPointId && draggedPointId !== el.dataset.pointId) {
+      const draggedIdx = state.points.findIndex(p => p.id === draggedPointId);
+      const targetIdx  = state.points.findIndex(p => p.id === el.dataset.pointId);
+      if (draggedIdx !== -1 && targetIdx !== -1) {
+        [state.points[draggedIdx], state.points[targetIdx]] = [state.points[targetIdx], state.points[draggedIdx]];
+        saveState();
+        renderPoints();
+      }
+    }
+  });
+}
+
 function renderPoints() {
   const grid = document.getElementById('points-grid');
   grid.innerHTML = '';
@@ -130,60 +254,115 @@ function renderPoints() {
     return;
   }
 
+  const viewMode = state.pointsViewMode || 'cards';
+  grid.className = viewMode === 'list' ? 'points-list' : '';
+
   state.points.forEach(point => {
-    const card = document.createElement('div');
-    card.className = 'point-card';
-    card.setAttribute('role', 'button');
-    card.tabIndex = 0;
-
-    const assignedUnitIds = state.assignments
-      .filter(a => a.pointId === point.id)
-      .map(a => a.unitId);
-    const assignedUnits = state.units.filter(u => assignedUnitIds.includes(u.id));
-
-    // Résumé par catégorie
-    let summaryHtml = '';
-    if (assignedUnits.length) {
-      const byCat = {};
-      assignedUnits.forEach(unit => {
-        const item = getItem(unit.itemId);
-        if (!item) return;
-        byCat[item.catId] = (byCat[item.catId] || 0) + 1;
-      });
-      summaryHtml = Object.entries(byCat).map(([catId, qty]) => {
-        const cat = getCat(catId);
-        return cat ? `<span class="point-tag" style="background:${cat.color}">${cat.name} ×${qty}</span>` : '';
-      }).join('');
-    } else {
-      summaryHtml = '<span class="point-empty">Aucun matériel assigné</span>';
-    }
-
-    // Tooltip survol — détail par unité
-    let tooltipHtml = assignedUnits.length
-      ? assignedUnits.map(unit => {
-          const item = getItem(unit.itemId);
-          const cat  = item ? getCat(item.catId) : null;
-          return `<div class="tooltip-item">
-            <span>${unit.name}</span>
-            ${cat ? `<span class="tooltip-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
-          </div>`;
-        }).join('')
-      : '<div style="color:var(--text-muted);font-size:.85rem">Aucun matériel assigné</div>';
-
-    card.innerHTML = `
-      <div class="point-card-header">
-        <span class="point-card-name">${point.name}</span>
-        <span class="point-click-hint">↗ détails</span>
-      </div>
-      ${point.desc ? `<div class="point-card-desc">${point.desc}</div>` : ''}
-      <div class="point-summary">${summaryHtml}</div>
-      <div class="point-tooltip">${tooltipHtml}</div>
-    `;
-
-    card.addEventListener('click', () => openPointDetail(point.id));
-    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') openPointDetail(point.id); });
+    const card = makePointCard(point);
     grid.appendChild(card);
   });
+}
+
+// ── Render: Bag Checker ────────────────────────────────────────────────────
+
+function populateBagCheckerSelect() {
+  const sel = document.getElementById('bag-checker-point-select');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Sélectionner un point —</option>';
+  state.points.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+  sel.value = current;
+}
+
+function renderBagChecker() {
+  const pointId = document.getElementById('bag-checker-point-select').value;
+  const content = document.getElementById('bag-checker-content');
+
+  if (!pointId) {
+    content.classList.add('hidden');
+    return;
+  }
+
+  content.classList.remove('hidden');
+
+  // Items assignés
+  const itemsList = document.getElementById('bag-checker-items');
+  itemsList.innerHTML = '';
+  const assigned = state.assignments.filter(a => a.pointId === pointId);
+
+  if (!assigned.length) {
+    const li = document.createElement('li');
+    li.textContent = 'Aucun matériel assigné';
+    li.style.color = 'var(--text-muted)';
+    li.style.padding = '8px 0';
+    itemsList.appendChild(li);
+  } else {
+    assigned.forEach(a => {
+      const unit = getUnit(a.unitId);
+      if (!unit) return;
+      const item = getItem(unit.itemId);
+      const cat = item ? getCat(item.catId) : null;
+
+      const li = document.createElement('li');
+      li.className = 'bag-item';
+      li.innerHTML = `
+        <span class="bag-item-name">${unit.name}</span>
+        <span class="bag-item-config ${a.configured ? 'done' : ''}">⚙ ${a.configured ? '✓' : '✗'}</span>
+        <input type="checkbox" class="bag-item-checkbox" ${a.inBag ? 'checked' : ''} />
+      `;
+
+      li.querySelector('.bag-item-checkbox').addEventListener('change', e => {
+        const idx = state.assignments.findIndex(x => x.unitId === unit.id);
+        if (idx !== -1) {
+          state.assignments[idx].inBag = e.target.checked;
+          saveState();
+          renderBagChecker();
+          renderPoints();
+        }
+      });
+
+      itemsList.appendChild(li);
+    });
+  }
+
+  // Essentiels
+  const essentialsList = document.getElementById('bag-checker-essentials');
+  essentialsList.innerHTML = '';
+
+  if (!state.essentials.length) {
+    const li = document.createElement('li');
+    li.textContent = 'Aucun indispensable configuré';
+    li.style.color = 'var(--text-muted)';
+    li.style.padding = '8px 0';
+    essentialsList.appendChild(li);
+  } else {
+    if (!state.pointBagConfigs[pointId]) {
+      state.pointBagConfigs[pointId] = {};
+    }
+
+    state.essentials.forEach(ess => {
+      const li = document.createElement('li');
+      li.className = 'bag-item';
+      li.innerHTML = `
+        <span class="bag-item-name">${ess.name}</span>
+        <input type="checkbox" class="bag-item-checkbox essential-checkbox" data-essential-id="${ess.id}" ${state.pointBagConfigs[pointId][ess.id] ? 'checked' : ''} />
+      `;
+
+      li.querySelector('.essential-checkbox').addEventListener('change', e => {
+        if (!state.pointBagConfigs[pointId]) {
+          state.pointBagConfigs[pointId] = {};
+        }
+        state.pointBagConfigs[pointId][ess.id] = e.target.checked;
+        saveState();
+      });
+
+      essentialsList.appendChild(li);
+    });
+  }
 }
 
 // ── Render: Admin ──────────────────────────────────────────────────────────
@@ -286,6 +465,30 @@ function renderAdmin() {
     const opt = document.createElement('option');
     opt.value = c.id; opt.textContent = c.name;
     catSelect.appendChild(opt);
+  });
+
+  // Essentiels
+  const essentialsList = document.getElementById('list-essentials');
+  essentialsList.innerHTML = '';
+  state.essentials.forEach(ess => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <div class="admin-list-info">
+        <span class="admin-list-meta">${ess.name}</span>
+      </div>
+      <button class="btn-danger btn-del-essential" data-essential-id="${ess.id}">Supprimer</button>
+    `;
+    li.querySelector('.btn-del-essential').addEventListener('click', () => {
+      state.essentials = state.essentials.filter(e => e.id !== ess.id);
+      Object.keys(state.pointBagConfigs).forEach(pointId => {
+        delete state.pointBagConfigs[pointId][ess.id];
+      });
+      saveState();
+      renderAdmin();
+      populateBagCheckerSelect();
+      renderBagChecker();
+    });
+    essentialsList.appendChild(li);
   });
 }
 
@@ -496,6 +699,7 @@ function openPointDetail(pointId) {
 function closePointDetail() {
   document.getElementById('modal-point-detail').classList.add('hidden');
   document.getElementById('overlay').classList.add('hidden');
+  updatePointCardColor();
   activePointId = null;
 }
 
@@ -557,8 +761,36 @@ function renderDetailAssignedList() {
     li.innerHTML = `
       <span class="assigned-row-name">${unit.name}</span>
       ${cat ? `<span class="assigned-row-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
+      <div class="assigned-row-checks">
+        <label class="check-label" title="Configuration faite">
+          <input type="checkbox" class="check-configured" ${a.configured ? 'checked' : ''} />
+          ⚙
+        </label>
+        <label class="check-label" title="Dans le sac">
+          <input type="checkbox" class="check-in-bag" ${a.inBag ? 'checked' : ''} />
+          🎒
+        </label>
+      </div>
       <button class="btn-danger btn-return">Retirer</button>
     `;
+
+    const chkConfigured = li.querySelector('.check-configured');
+    const chkInBag = li.querySelector('.check-in-bag');
+
+    const persistState = () => {
+      const idx = state.assignments.findIndex(x => x.pointId === activePointId && x.unitId === unit.id);
+      if (idx !== -1) {
+        state.assignments[idx].configured = chkConfigured.checked;
+        state.assignments[idx].inBag = chkInBag.checked;
+        saveState();
+        updatePointCardColor();
+        renderPoints();
+      }
+    };
+
+    chkConfigured.addEventListener('change', persistState);
+    chkInBag.addEventListener('change', persistState);
+
     li.querySelector('.btn-return').addEventListener('click', () => {
       state.assignments = state.assignments.filter(
         a2 => !(a2.pointId === activePointId && a2.unitId === unit.id)
@@ -566,6 +798,7 @@ function renderDetailAssignedList() {
       saveState();
       renderDetailAssignedList();
       populateDetailAssignSelect();
+      updatePointCardColor();
       renderReserve(); renderPoints();
     });
     ul.appendChild(li);
@@ -612,7 +845,16 @@ function renderAll() {
   populateReserveFilter();
   renderReserve();
   renderPoints();
+  populateBagCheckerSelect();
+  renderBagChecker();
   renderAdmin();
+  updatePointsViewButton();
+}
+
+function updatePointsViewButton() {
+  const btn = document.getElementById('btn-toggle-points-view');
+  const mode = state.pointsViewMode || 'cards';
+  btn.textContent = mode === 'cards' ? '≣ Liste' : '⊞ Cartes';
 }
 
 // ── Events ─────────────────────────────────────────────────────────────────
@@ -627,6 +869,20 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 document.getElementById('reserve-filter-cat').addEventListener('change', renderReserve);
+
+// Bag Checker
+document.getElementById('bag-checker-point-select').addEventListener('change', renderBagChecker);
+
+// Ajouter essentiel
+document.getElementById('form-add-essential').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('input-essential-name').value.trim();
+  if (!name) return;
+  state.essentials.push({ id: uid(), name });
+  saveState();
+  document.getElementById('input-essential-name').value = '';
+  renderAll();
+});
 
 // Ajouter catégorie
 document.getElementById('form-add-category').addEventListener('submit', e => {
@@ -658,6 +914,9 @@ document.getElementById('form-add-item').addEventListener('submit', e => {
   renderAll();
 });
 
+// Basculer vue points
+document.getElementById('btn-toggle-points-view').addEventListener('click', togglePointsView);
+
 // Ajouter point
 document.getElementById('btn-add-point').addEventListener('click', openAddPointModal);
 document.getElementById('btn-close-add-point').addEventListener('click', closeAddPointModal);
@@ -684,7 +943,7 @@ document.getElementById('form-edit-point').addEventListener('submit', e => {
   if (!name || !activePointId) return;
   const idx = state.points.findIndex(p => p.id === activePointId);
   if (idx !== -1) state.points[idx] = { ...state.points[idx], name, desc };
-  saveState(); renderPoints(); setDetailMode('view');
+  saveState(); updatePointCardColor(); renderPoints(); setDetailMode('view');
 });
 
 document.getElementById('btn-delete-point').addEventListener('click', () => {
@@ -701,10 +960,11 @@ document.getElementById('btn-detail-do-assign').addEventListener('click', () => 
   const unitId = document.getElementById('detail-assign-select').value;
   if (!unitId || !activePointId) return;
   if (state.assignments.find(a => a.unitId === unitId)) return; // déjà assignée
-  state.assignments.push({ pointId: activePointId, unitId });
+  state.assignments.push({ pointId: activePointId, unitId, configured: false, inBag: false });
   saveState();
   renderDetailAssignedList();
   populateDetailAssignSelect();
+  updatePointCardColor();
   renderReserve(); renderPoints();
   document.getElementById('detail-assign-select').value = '';
 });
@@ -755,8 +1015,13 @@ document.getElementById('btn-reset-inventory').addEventListener('click', () => {
       { id: uid(), name: 'Scène Principale', desc: 'Grande scène extérieure' },
       { id: uid(), name: 'Scène 2',          desc: 'Scène indoor' },
     ];
+    state.essentials = [];
+    state.pointBagConfigs = {};
     saveState();
   }
+
+  if (!state.essentials) state.essentials = [];
+  if (!state.pointBagConfigs) state.pointBagConfigs = {};
 
   renderAll();
 })();
