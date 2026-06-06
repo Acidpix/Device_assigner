@@ -263,6 +263,22 @@ function renderPoints() {
   });
 }
 
+// ── Essentials filtering ───────────────────────────────────────────────────
+
+function essentialApplies(ess, pointId) {
+  const c = ess.conditions;
+  if (!c || (!c.catIds?.length && !c.itemIds?.length)) return true;
+  const assignedItemIds = state.assignments
+    .filter(a => a.pointId === pointId)
+    .map(a => getUnit(a.unitId)?.itemId)
+    .filter(Boolean);
+  return assignedItemIds.some(itemId => {
+    const item = getItem(itemId);
+    if (!item) return false;
+    return c.catIds?.includes(item.catId) || c.itemIds?.includes(itemId);
+  });
+}
+
 // ── Render: Bag Checker ────────────────────────────────────────────────────
 
 function populateBagCheckerSelect() {
@@ -366,7 +382,16 @@ function renderBagChecker() {
       state.pointBagConfigs[pointId] = {};
     }
 
-    state.essentials.forEach(ess => {
+    const applicableEssentials = state.essentials.filter(ess => essentialApplies(ess, pointId));
+
+    if (!applicableEssentials.length) {
+      const li = document.createElement('li');
+      li.textContent = 'Aucun indispensable applicable pour ce point.';
+      li.style.cssText = 'color:var(--text-muted);padding:12px 0;font-size:.9rem';
+      essentialsList.appendChild(li);
+    }
+
+    applicableEssentials.forEach(ess => {
       const checked = !!state.pointBagConfigs[pointId][ess.id];
       const li = document.createElement('li');
       li.className = 'bag-item';
@@ -506,26 +531,133 @@ function renderAdmin() {
   // Essentiels
   const essentialsList = document.getElementById('list-essentials');
   essentialsList.innerHTML = '';
-  state.essentials.forEach(ess => {
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <div class="admin-list-info">
-        <span class="admin-list-meta">${ess.name}</span>
-      </div>
-      <button class="btn-danger btn-del-essential" data-essential-id="${ess.id}">Supprimer</button>
-    `;
-    li.querySelector('.btn-del-essential').addEventListener('click', () => {
-      state.essentials = state.essentials.filter(e => e.id !== ess.id);
-      Object.keys(state.pointBagConfigs).forEach(pointId => {
-        delete state.pointBagConfigs[pointId][ess.id];
+  state.essentials.forEach(ess => buildEssentialRow(ess, essentialsList));
+}
+
+function buildEssentialRow(ess, list) {
+  if (!ess.conditions) ess.conditions = { catIds: [], itemIds: [] };
+
+  const li = document.createElement('li');
+  li.className = 'essential-row';
+
+  // ── Résumé ────────────────────────────────────────────────────────────
+  const hasConds = ess.conditions.catIds.length || ess.conditions.itemIds.length;
+  const condLabel = hasConds
+    ? [...ess.conditions.catIds.map(id => getCat(id)?.name), ...ess.conditions.itemIds.map(id => getItem(id)?.name)]
+        .filter(Boolean).join(', ')
+    : 'Toujours affiché';
+
+  const summary = document.createElement('div');
+  summary.className = 'essential-summary';
+  summary.innerHTML = `
+    <div class="essential-summary-info">
+      <span class="essential-name">${ess.name}</span>
+      <span class="essential-cond-hint ${hasConds ? '' : 'muted'}">Si : ${condLabel}</span>
+    </div>
+    <div class="essential-summary-actions">
+      <button class="btn-ghost btn-sm btn-cond-toggle">⚙ Conditions</button>
+      <button class="btn-danger btn-sm btn-del-ess">Supprimer</button>
+    </div>
+  `;
+
+  // ── Panneau conditions ─────────────────────────────────────────────────
+  const panel = document.createElement('div');
+  panel.className = 'essential-cond-panel hidden';
+
+  function buildPanel() {
+    panel.innerHTML = '';
+
+    const note = document.createElement('p');
+    note.className = 'essential-cond-note';
+    note.textContent = 'Afficher cet indispensable seulement si le point possède au moins un équipement des catégories ou types cochés. Sans sélection → toujours affiché.';
+    panel.appendChild(note);
+
+    if (state.categories.length) {
+      const sec = document.createElement('div');
+      sec.className = 'cond-section';
+      sec.innerHTML = '<span class="cond-section-title">Catégories</span>';
+      const grid = document.createElement('div');
+      grid.className = 'cond-grid';
+      state.categories.forEach(cat => {
+        const checked = ess.conditions.catIds.includes(cat.id);
+        const lbl = document.createElement('label');
+        lbl.className = 'cond-chip' + (checked ? ' active' : '');
+        lbl.innerHTML = `<input type="checkbox" ${checked ? 'checked' : ''} /><span class="cat-dot" style="background:${cat.color}"></span>${cat.name}`;
+        lbl.querySelector('input').addEventListener('change', e => {
+          if (e.target.checked) {
+            if (!ess.conditions.catIds.includes(cat.id)) ess.conditions.catIds.push(cat.id);
+          } else {
+            ess.conditions.catIds = ess.conditions.catIds.filter(id => id !== cat.id);
+          }
+          lbl.classList.toggle('active', e.target.checked);
+          persistConds();
+        });
+        grid.appendChild(lbl);
       });
-      saveState();
-      renderAdmin();
-      populateBagCheckerSelect();
-      renderBagChecker();
-    });
-    essentialsList.appendChild(li);
+      sec.appendChild(grid);
+      panel.appendChild(sec);
+    }
+
+    if (state.items.length) {
+      const sec = document.createElement('div');
+      sec.className = 'cond-section';
+      sec.innerHTML = '<span class="cond-section-title">Types de matériel</span>';
+      const grid = document.createElement('div');
+      grid.className = 'cond-grid';
+      state.items.forEach(item => {
+        const checked = ess.conditions.itemIds.includes(item.id);
+        const cat = getCat(item.catId);
+        const lbl = document.createElement('label');
+        lbl.className = 'cond-chip' + (checked ? ' active' : '');
+        lbl.innerHTML = `<input type="checkbox" ${checked ? 'checked' : ''} />${cat ? `<span class="cat-dot" style="background:${cat.color}"></span>` : ''}${item.name}`;
+        lbl.querySelector('input').addEventListener('change', e => {
+          if (e.target.checked) {
+            if (!ess.conditions.itemIds.includes(item.id)) ess.conditions.itemIds.push(item.id);
+          } else {
+            ess.conditions.itemIds = ess.conditions.itemIds.filter(id => id !== item.id);
+          }
+          lbl.classList.toggle('active', e.target.checked);
+          persistConds();
+        });
+        grid.appendChild(lbl);
+      });
+      sec.appendChild(grid);
+      panel.appendChild(sec);
+    }
+  }
+
+  function persistConds() {
+    const idx = state.essentials.findIndex(e => e.id === ess.id);
+    if (idx !== -1) state.essentials[idx].conditions = ess.conditions;
+    saveState();
+    // Mettre à jour le hint sans reconstruire tout l'admin
+    const hasConds = ess.conditions.catIds.length || ess.conditions.itemIds.length;
+    const newLabel = hasConds
+      ? [...ess.conditions.catIds.map(id => getCat(id)?.name), ...ess.conditions.itemIds.map(id => getItem(id)?.name)]
+          .filter(Boolean).join(', ')
+      : 'Toujours affiché';
+    const hint = summary.querySelector('.essential-cond-hint');
+    hint.textContent = 'Si : ' + newLabel;
+    hint.classList.toggle('muted', !hasConds);
+  }
+
+  summary.querySelector('.btn-cond-toggle').addEventListener('click', () => {
+    const isOpen = !panel.classList.contains('hidden');
+    panel.classList.toggle('hidden');
+    if (!isOpen) buildPanel();
   });
+
+  summary.querySelector('.btn-del-ess').addEventListener('click', () => {
+    state.essentials = state.essentials.filter(e => e.id !== ess.id);
+    Object.keys(state.pointBagConfigs).forEach(pid => { delete state.pointBagConfigs[pid][ess.id]; });
+    saveState();
+    renderAdmin();
+    renderBagChecker();
+  });
+
+  li.appendChild(summary);
+  li.appendChild(panel);
+  list.appendChild(li);
 }
 
 function buildItemRow(item, list) {
