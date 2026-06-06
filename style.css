@@ -161,21 +161,29 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .bag-checker-container { max-width: 640px; margin: 0 auto; padding: 0 16px; }
 .bag-checker-control { margin-bottom: 24px; }
 .bag-checker-control label { display: flex; flex-direction: column; gap: 8px; font-weight: 500; }
-.bag-checker-control select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 7px; font-size: 1rem; }
-.bag-checker-content { display: flex; flex-direction: column; gap: 24px; }
+.bag-checker-control select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 12px 14px; border-radius: 7px; font-size: 1rem; }
+.bag-checker-content { display: flex; flex-direction: column; gap: 28px; }
 .bag-checker-content.hidden { display: none; }
-.bag-checker-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
-.bag-checker-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 
-/* Bag item row */
-.bag-item { display: flex; align-items: center; gap: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
-.bag-btn { flex-shrink: 0; width: 52px; height: 48px; border-radius: 8px; border: 2px solid var(--border); background: var(--bg); cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s; }
-.bag-btn:hover { border-color: var(--success); }
-.bag-btn.checked { background: rgba(0,184,148,.2); border-color: var(--success); }
-.bag-item-name { flex: 1; font-weight: 500; font-size: .95rem; }
-.bag-item-config-badge { flex-shrink: 0; font-size: .75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
-.bag-item-config-badge.ok { background: rgba(0,184,148,.15); color: var(--success); border: 1px solid rgba(0,184,148,.3); }
-.bag-item-config-badge.nok { background: rgba(224,92,92,.12); color: var(--danger); border: 1px solid rgba(224,92,92,.3); }
+.bag-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.bag-section-header h3 { font-size: 1rem; font-weight: 600; }
+.bag-col-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-muted); width: 72px; text-align: center; flex-shrink: 0; }
+
+.bag-checker-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+
+/* Chaque ligne = 2 zones bien séparées */
+.bag-item { display: flex; align-items: stretch; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; min-height: 60px; }
+.bag-item-info { flex: 1; padding: 12px 14px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.bag-item-name { font-weight: 500; font-size: .97rem; line-height: 1.3; }
+.bag-item-config-badge { display: inline-block; font-size: .72rem; font-weight: 700; padding: 3px 7px; border-radius: 5px; white-space: nowrap; align-self: flex-start; }
+.bag-item-config-badge.ok  { background: rgba(0,184,148,.15); color: var(--success); border: 1px solid rgba(0,184,148,.3); }
+.bag-item-config-badge.nok { background: rgba(224,92,92,.12); color: var(--danger);  border: 1px solid rgba(224,92,92,.3); }
+
+/* Colonne coche — grande zone tactile */
+.bag-check-col { width: 72px; flex-shrink: 0; border-left: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+.bag-btn { width: 100%; height: 100%; min-height: 60px; border: none; background: transparent; cursor: pointer; font-size: 1.5rem; font-weight: 900; color: var(--border); transition: background .15s, color .15s; display: flex; align-items: center; justify-content: center; }
+.bag-btn:active { opacity: .7; }
+.bag-btn.checked { background: rgba(0,184,148,.18); color: var(--success); }
 
 /* ── Admin ── */
 .admin-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }

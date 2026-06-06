@@ -297,8 +297,7 @@ function renderBagChecker() {
   if (!assigned.length) {
     const li = document.createElement('li');
     li.textContent = 'Aucun matériel assigné';
-    li.style.color = 'var(--text-muted)';
-    li.style.padding = '8px 0';
+    li.style.cssText = 'color:var(--text-muted);padding:12px 0;font-size:.9rem';
     itemsList.appendChild(li);
   } else {
     assigned.forEach(a => {
@@ -308,10 +307,8 @@ function renderBagChecker() {
       const li = document.createElement('li');
       li.className = 'bag-item';
 
-      const btn = document.createElement('button');
-      btn.className = 'bag-btn' + (a.inBag ? ' checked' : '');
-      btn.textContent = '🎒';
-      btn.title = a.inBag ? 'Dans le sac' : 'Pas dans le sac';
+      const info = document.createElement('div');
+      info.className = 'bag-item-info';
 
       const nameSpan = document.createElement('span');
       nameSpan.className = 'bag-item-name';
@@ -321,19 +318,29 @@ function renderBagChecker() {
       badge.className = 'bag-item-config-badge ' + (a.configured ? 'ok' : 'nok');
       badge.textContent = a.configured ? 'Config OK' : 'Config NOK';
 
+      info.appendChild(nameSpan);
+      info.appendChild(badge);
+
+      const checkCol = document.createElement('div');
+      checkCol.className = 'bag-check-col';
+
+      const btn = document.createElement('button');
+      btn.className = 'bag-btn' + (a.inBag ? ' checked' : '');
+      btn.textContent = '✓';
+
       btn.addEventListener('click', () => {
         const idx = state.assignments.findIndex(x => x.unitId === unit.id);
         if (idx !== -1) {
           state.assignments[idx].inBag = !state.assignments[idx].inBag;
+          btn.classList.toggle('checked', state.assignments[idx].inBag);
           saveState();
-          renderBagChecker();
           renderPoints();
         }
       });
 
-      li.appendChild(btn);
-      li.appendChild(nameSpan);
-      li.appendChild(badge);
+      checkCol.appendChild(btn);
+      li.appendChild(info);
+      li.appendChild(checkCol);
       itemsList.appendChild(li);
     });
   }
@@ -345,8 +352,7 @@ function renderBagChecker() {
   if (!state.essentials.length) {
     const li = document.createElement('li');
     li.textContent = 'Aucun indispensable configuré (Administration → Indispensables)';
-    li.style.color = 'var(--text-muted)';
-    li.style.padding = '8px 0';
+    li.style.cssText = 'color:var(--text-muted);padding:12px 0;font-size:.9rem';
     essentialsList.appendChild(li);
   } else {
     if (!state.pointBagConfigs[pointId]) {
@@ -358,23 +364,31 @@ function renderBagChecker() {
       const li = document.createElement('li');
       li.className = 'bag-item';
 
-      const btn = document.createElement('button');
-      btn.className = 'bag-btn' + (checked ? ' checked' : '');
-      btn.textContent = '🎒';
+      const info = document.createElement('div');
+      info.className = 'bag-item-info';
 
       const nameSpan = document.createElement('span');
       nameSpan.className = 'bag-item-name';
       nameSpan.textContent = ess.name;
+      info.appendChild(nameSpan);
+
+      const checkCol = document.createElement('div');
+      checkCol.className = 'bag-check-col';
+
+      const btn = document.createElement('button');
+      btn.className = 'bag-btn' + (checked ? ' checked' : '');
+      btn.textContent = '✓';
 
       btn.addEventListener('click', () => {
         if (!state.pointBagConfigs[pointId]) state.pointBagConfigs[pointId] = {};
         state.pointBagConfigs[pointId][ess.id] = !state.pointBagConfigs[pointId][ess.id];
-        saveState();
         btn.classList.toggle('checked', state.pointBagConfigs[pointId][ess.id]);
+        saveState();
       });
 
-      li.appendChild(btn);
-      li.appendChild(nameSpan);
+      checkCol.appendChild(btn);
+      li.appendChild(info);
+      li.appendChild(checkCol);
       essentialsList.appendChild(li);
     });
   }
