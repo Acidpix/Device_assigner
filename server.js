@@ -46,6 +46,7 @@ function buildPointPayload(point, data) {
     const cat  = item ? (data.categories || []).find(c => c.id === item.catId) : null;
     return {
       unitId:     a.unitId,
+      name:       unit?.name         || null,
       serialNumber: unit?.serialNumber || null,
       configured: a.configured || false,
       inBag:      a.inBag      || false,

@@ -46,6 +46,7 @@ X-Api-Key: mon_secret
     "material": [
       {
         "unitId": "unit456",
+        "name": "Talkie Brice",
         "serialNumber": "SN-00042",
         "configured": true,
         "inBag": false,
@@ -112,6 +113,7 @@ X-Api-Key: mon_secret
 | Champ | Type | Description |
 |-------|------|-------------|
 | `unitId` | string | Identifiant de l'unité physique |
+| `name` | string \| null | Nom de l'unité (ex : "Talkie Brice") |
 | `serialNumber` | string \| null | Numéro de série |
 | `configured` | boolean | L'unité a été configurée |
 | `inBag` | boolean | L'unité est dans le sac du point |
