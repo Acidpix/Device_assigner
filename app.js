@@ -63,6 +63,17 @@ async function syncFromServer() {
 let state;
 let draggedPointId = null;
 
+// ── Détection appareil tactile / téléphone ──────────────────────────────────
+// pointer:coarse = l'entrée principale est le doigt (téléphone/tablette),
+// sans déclencher sur un portable tactile équipé d'une souris.
+const IS_TOUCH = window.matchMedia('(pointer: coarse)').matches;
+
+function applyDeviceClass() {
+  const isMobile = IS_TOUCH || window.matchMedia('(max-width: 768px)').matches;
+  document.body.classList.toggle('is-mobile', isMobile);
+  document.body.classList.toggle('is-touch', IS_TOUCH);
+}
+
 // ── Utils ──────────────────────────────────────────────────────────────────
 
 function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
@@ -205,7 +216,7 @@ function makePointCard(point) {
   card.className = `point-card state-${stateColor}`;
   card.setAttribute('role', 'button');
   card.tabIndex = 0;
-  card.draggable = true;
+  card.draggable = !IS_TOUCH;   // réorganisation par glisser-déposer désactivée au tactile
   card.dataset.pointId = point.id;
 
   card.innerHTML = `
@@ -1331,6 +1342,9 @@ document.getElementById('btn-reset-inventory').addEventListener('click', () => {
 
   if (!state.essentials) state.essentials = [];
   if (!state.pointBagConfigs) state.pointBagConfigs = {};
+
+  applyDeviceClass();
+  window.addEventListener('resize', applyDeviceClass);
 
   renderAll();
 

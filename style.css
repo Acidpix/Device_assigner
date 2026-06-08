@@ -380,3 +380,83 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--surface); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   INTERFACE MOBILE / TACTILE
+   Activée par la largeur d'écran (≤768px) et par la classe body.is-mobile
+   posée en JS quand un téléphone/tablette tactile est détecté.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* Pas de survol sur écran tactile : on masque les éléments dépendant du hover */
+@media (hover: none) {
+  .point-click-hint { display: none !important; }
+  .point-tooltip { display: none !important; }
+  .point-card:hover .point-tooltip { display: none !important; }
+}
+
+@media (max-width: 768px) {
+  /* En-tête : marque au-dessus, navigation en barre défilante */
+  .header-inner { flex-direction: column; height: auto; padding: 10px 12px; gap: 8px; align-items: stretch; }
+  .header-brand { justify-content: center; gap: 10px; }
+  .header-logo { height: 44px; }
+  .header-subtitle { font-size: .85rem; }
+  nav {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  .nav-btn { flex: 0 0 auto; padding: 10px 16px; font-size: .9rem; }
+
+  /* Contenu : marges réduites */
+  main { padding: 16px 12px 28px; }
+  .section-header h2 { font-size: 1.2rem; }
+
+  /* Grilles : une seule colonne, cibles tactiles plus grandes */
+  #points-grid, #points-grid.points-list { grid-template-columns: 1fr; gap: 12px; }
+  .items-grid { grid-template-columns: 1fr; }
+  .point-card { padding: 16px; }
+
+  /* Boutons un peu plus hauts pour le doigt */
+  .btn-primary, .btn-ghost, .btn-danger, .btn-warning { padding-top: 9px; padding-bottom: 9px; }
+
+  /* ── Fenêtres : style « feuille » glissant depuis le bas ── */
+  .modal { align-items: flex-end; }
+  .modal-box, .modal-box--sm {
+    max-width: 100%;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    animation: sheet-up .2s ease-out;
+  }
+  .modal-header { padding: 16px 18px 12px; }
+  .modal-body { padding: 16px 18px 24px; }
+  .modal-close { font-size: 1.8rem; padding: 0 8px; }
+
+  /* Réserve : grille d'unités plus large */
+  .unit-slots { grid-template-columns: repeat(8, 1fr); }
+  .unit-slot { width: 100%; height: 10px; }
+
+  /* Bag Checker : pleine largeur, boutons tactiles */
+  .bag-checker-container { padding: 0; }
+  .bag-btn { font-size: 1.5rem; }
+
+  /* Détail d'un point : ligne d'unité réorganisée pour le tactile */
+  .assigned-row { flex-wrap: wrap; }
+  .assigned-row-info { order: 1; flex: 1; min-width: 0; }
+  .assigned-row-actions { order: 2; }
+  .assigned-row-checks { flex-direction: row; width: 100%; order: 3; }
+  .assigned-row-checks .check-toggle { flex: 1; padding: 11px 8px; }
+
+  /* Sous-onglets admin défilants */
+  .admin-subtabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .admin-subtabs::-webkit-scrollbar { display: none; }
+  .admin-subtab-btn { flex: 0 0 auto; }
+}
+
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
