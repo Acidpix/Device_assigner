@@ -344,6 +344,16 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 #form-add-point { display: flex; flex-direction: column; gap: 10px; }
 #form-add-point label { display: flex; flex-direction: column; gap: 4px; font-size: .88rem; color: var(--text-muted); }
 #form-add-point input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 7px; font-size: .9rem; }
+#form-add-point textarea,
+#detail-point-comment { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 7px; font-size: .9rem; font-family: inherit; resize: vertical; width: 100%; box-sizing: border-box; }
+
+/* Comment zone (point detail) */
+.detail-comment-zone { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.detail-comment-zone h4 { margin-bottom: 8px; }
+
+/* Comment (bag checker) */
+.bag-checker-comment { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--accent); color: var(--text); padding: 12px 14px; border-radius: 7px; font-size: .92rem; white-space: pre-wrap; }
+.bag-checker-comment.hidden { display: none; }
 
 /* Empty */
 .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); font-size: .95rem; }

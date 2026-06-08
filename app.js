@@ -305,6 +305,17 @@ function renderBagChecker() {
 
   content.classList.remove('hidden');
 
+  // Commentaire du point
+  const point      = getPoint(pointId);
+  const commentEl  = document.getElementById('bag-checker-comment');
+  if (point && point.comment) {
+    commentEl.textContent = point.comment;
+    commentEl.classList.remove('hidden');
+  } else {
+    commentEl.textContent = '';
+    commentEl.classList.add('hidden');
+  }
+
   // Items assignés
   const itemsList = document.getElementById('bag-checker-items');
   itemsList.innerHTML = '';
@@ -889,6 +900,8 @@ function renderDetailModal() {
     descEl.textContent   = point.desc || '';
     descEl.style.display = point.desc ? '' : 'none';
 
+    document.getElementById('detail-point-comment').value = point.comment || '';
+
     renderDetailAssignedList();
     populateDetailAssignSelect();
   } else {
@@ -1017,6 +1030,7 @@ function populateDetailAssignSelect() {
 function openAddPointModal() {
   document.getElementById('input-point-name').value = '';
   document.getElementById('input-point-desc').value = '';
+  document.getElementById('input-point-comment').value = '';
   document.getElementById('modal-add-point').classList.remove('hidden');
   document.getElementById('overlay').classList.remove('hidden');
   setTimeout(() => document.getElementById('input-point-name').focus(), 50);
@@ -1122,10 +1136,21 @@ document.getElementById('form-add-point').addEventListener('submit', e => {
   e.preventDefault();
   const name = document.getElementById('input-point-name').value.trim();
   const desc = document.getElementById('input-point-desc').value.trim();
+  const comment = document.getElementById('input-point-comment').value.trim();
   if (!name) return;
-  state.points.push({ id: uid(), name, desc });
+  state.points.push({ id: uid(), name, desc, comment });
   saveState();
   closeAddPointModal(); renderPoints();
+});
+
+// Commentaire inline (vue détail) — sauvegarde à la saisie
+document.getElementById('detail-point-comment').addEventListener('input', e => {
+  if (!activePointId) return;
+  const idx = state.points.findIndex(p => p.id === activePointId);
+  if (idx !== -1) {
+    state.points[idx].comment = e.target.value;
+    saveState();
+  }
 });
 
 // Point detail — navigation modes

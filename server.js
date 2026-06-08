@@ -59,8 +59,9 @@ function buildPointPayload(point, data) {
   });
   return {
     id:     point.id,
-    name:   point.name,
-    desc:   point.desc || null,
+    name:    point.name,
+    desc:    point.desc || null,
+    comment: point.comment || null,
     status: pointStateColor(assignments),
     material,
   };

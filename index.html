@@ -70,6 +70,8 @@
             </div>
             <ul id="bag-checker-essentials" class="bag-checker-list"></ul>
           </div>
+
+          <div id="bag-checker-comment" class="bag-checker-comment hidden"></div>
         </div>
       </div>
     </section>
@@ -179,6 +181,11 @@
         <h4>Matériel assigné</h4>
         <ul id="detail-assigned-list"></ul>
 
+        <div class="detail-comment-zone">
+          <h4>Commentaire</h4>
+          <textarea id="detail-point-comment" rows="3" placeholder="Note visible dans le Bag Checker…"></textarea>
+        </div>
+
         <div class="detail-assign-zone">
           <h4>Assigner une unité</h4>
           <div class="assign-form">
@@ -224,6 +231,9 @@
           </label>
           <label>Description (optionnel)
             <input type="text" id="input-point-desc" placeholder="ex : Zone VIP, côté jardin…" />
+          </label>
+          <label>Commentaire (optionnel)
+            <textarea id="input-point-comment" rows="3" placeholder="Note visible dans le Bag Checker…"></textarea>
           </label>
           <button type="submit" class="btn-primary" style="margin-top:12px">Créer</button>
         </form>
