@@ -305,16 +305,10 @@ function renderBagChecker() {
 
   content.classList.remove('hidden');
 
-  // Commentaire du point
-  const point      = getPoint(pointId);
-  const commentEl  = document.getElementById('bag-checker-comment');
-  if (point && point.comment) {
-    commentEl.textContent = point.comment;
-    commentEl.classList.remove('hidden');
-  } else {
-    commentEl.textContent = '';
-    commentEl.classList.add('hidden');
-  }
+  // Commentaire du point (spécifique à chaque point, éditable ici)
+  const point     = getPoint(pointId);
+  const commentEl = document.getElementById('bag-checker-comment');
+  commentEl.value = (point && point.comment) || '';
 
   // Items assignés
   const itemsList = document.getElementById('bag-checker-items');
@@ -1084,6 +1078,17 @@ document.querySelectorAll('.admin-subtab-btn').forEach(btn => {
 
 // Bag Checker
 document.getElementById('bag-checker-point-select').addEventListener('change', renderBagChecker);
+
+// Commentaire éditable depuis le Bag Checker (spécifique au point sélectionné)
+document.getElementById('bag-checker-comment').addEventListener('input', e => {
+  const pointId = document.getElementById('bag-checker-point-select').value;
+  if (!pointId) return;
+  const idx = state.points.findIndex(p => p.id === pointId);
+  if (idx !== -1) {
+    state.points[idx].comment = e.target.value;
+    saveState();
+  }
+});
 
 // Ajouter essentiel
 document.getElementById('form-add-essential').addEventListener('submit', e => {

@@ -345,15 +345,22 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 #form-add-point label { display: flex; flex-direction: column; gap: 4px; font-size: .88rem; color: var(--text-muted); }
 #form-add-point input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 7px; font-size: .9rem; }
 #form-add-point textarea,
-#detail-point-comment { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 7px; font-size: .9rem; font-family: inherit; resize: vertical; width: 100%; box-sizing: border-box; }
+#detail-point-comment,
+.bag-comment-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: .9rem; font-family: inherit; line-height: 1.45; resize: vertical; width: 100%; box-sizing: border-box; transition: border-color .15s, box-shadow .15s; }
+#form-add-point textarea:focus,
+#detail-point-comment:focus,
+.bag-comment-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,92,252,.18); }
+#detail-point-comment::placeholder,
+.bag-comment-input::placeholder { color: var(--text-muted); }
 
 /* Comment zone (point detail) */
 .detail-comment-zone { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
-.detail-comment-zone h4 { margin-bottom: 8px; }
+.detail-comment-zone h4 { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 
 /* Comment (bag checker) */
-.bag-checker-comment { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--accent); color: var(--text); padding: 12px 14px; border-radius: 7px; font-size: .92rem; white-space: pre-wrap; }
-.bag-checker-comment.hidden { display: none; }
+.bag-comment-block { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.bag-comment-block .bag-section-header { margin-bottom: 10px; }
+.bag-comment-block .bag-comment-input { background: var(--bg); }
 
 /* Empty */
 .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); font-size: .95rem; }
