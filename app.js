@@ -1010,7 +1010,6 @@ function renderDetailAssignedList() {
         lblPlaced.classList.toggle('checked', chkPlaced.checked);
         saveState();
         updatePointCardColor();
-        renderPoints();
       }
     };
 
@@ -1206,8 +1205,6 @@ document.getElementById('btn-place-all').addEventListener('click', () => {
   saveState();
   renderDetailAssignedList();
   updatePointCardColor();
-  renderPoints();
-  renderBagChecker();
 });
 
 document.getElementById('form-edit-point').addEventListener('submit', e => {
