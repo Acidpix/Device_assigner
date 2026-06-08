@@ -186,7 +186,12 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .bag-item-config-badge.nok { background: rgba(224,92,92,.12); color: var(--danger);  border: 1px solid rgba(224,92,92,.3); }
 
 /* Bouton coche — entité propre, hauteur = info */
-.bag-check-col { flex-shrink: 0; width: 64px; display: flex; }
+.bag-col-labels { display: flex; gap: 6px; flex-shrink: 0; }
+.bag-col-labels .bag-col-label { width: 56px; }
+.bag-check-col { flex-shrink: 0; display: flex; gap: 6px; }
+.bag-check-col .bag-btn { width: 56px; flex: none; }
+.bag-checker-essentials .bag-check-col .bag-btn { width: 56px; }
+.bag-checker-essentials .bag-col-label { width: 56px; }
 .bag-btn { flex: 1; border-radius: 10px; border: 2px solid var(--border); background: var(--surface2); cursor: pointer; font-size: 1.6rem; font-weight: 900; color: var(--text-muted); transition: background .15s, border-color .15s, color .15s; display: flex; align-items: center; justify-content: center; }
 .bag-btn:active { transform: scale(.95); }
 .bag-btn.checked { background: rgba(0,184,148,.18); border-color: var(--success); color: var(--success); }
@@ -313,6 +318,11 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .modal-close:hover { color: var(--text); }
 .modal-body { padding: 20px 24px 24px; overflow-y: auto; }
 .modal-body h4 { font-size: .88rem; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; }
+
+/* Detail list header (Matériel assigné + Tout poser) */
+.detail-list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.detail-list-header h4 { margin-bottom: 0; }
+#btn-place-all:disabled { opacity: .45; cursor: default; }
 
 /* Assigned list */
 #detail-assigned-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; max-height: 320px; overflow-y: auto; }

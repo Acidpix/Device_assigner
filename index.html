@@ -58,7 +58,10 @@
           <div>
             <div class="bag-section-header">
               <h3>Matériel assigné</h3>
-              <span class="bag-col-label">Dans le sac</span>
+              <div class="bag-col-labels">
+                <span class="bag-col-label">Posé</span>
+                <span class="bag-col-label">Dans le sac</span>
+              </div>
             </div>
             <ul id="bag-checker-items" class="bag-checker-list"></ul>
           </div>
@@ -183,7 +186,10 @@
 
       <!-- Corps VIEW -->
       <div id="detail-view-body" class="modal-body">
-        <h4>Matériel assigné</h4>
+        <div class="detail-list-header">
+          <h4>Matériel assigné</h4>
+          <button type="button" class="btn-ghost btn-sm" id="btn-place-all">📍 Tout poser</button>
+        </div>
         <ul id="detail-assigned-list"></ul>
 
         <div class="detail-comment-zone">

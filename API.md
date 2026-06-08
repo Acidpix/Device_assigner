@@ -50,6 +50,7 @@ X-Api-Key: mon_secret
         "serialNumber": "SN-00042",
         "configured": true,
         "inBag": false,
+        "placed": false,
         "item": {
           "id": "item789",
           "name": "Talkie-walkie",
@@ -117,6 +118,7 @@ X-Api-Key: mon_secret
 | `serialNumber` | string \| null | Numéro de série |
 | `configured` | boolean | L'unité a été configurée |
 | `inBag` | boolean | L'unité est dans le sac du point |
+| `placed` | boolean | L'équipement a été posé / installé sur le point |
 | `item` | object \| null | Type de matériel |
 | `item.id` | string | Identifiant du type |
 | `item.name` | string | Nom du type (ex : "Talkie-walkie") |

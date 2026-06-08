@@ -50,6 +50,7 @@ function buildPointPayload(point, data) {
       serialNumber: unit?.serialNumber || null,
       configured: a.configured || false,
       inBag:      a.inBag      || false,
+      placed:     a.placed     || false,
       item: item ? {
         id:   item.id,
         name: item.name,

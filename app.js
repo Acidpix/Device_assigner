@@ -347,8 +347,24 @@ function renderBagChecker() {
       const checkCol = document.createElement('div');
       checkCol.className = 'bag-check-col';
 
+      const placedBtn = document.createElement('button');
+      placedBtn.className = 'bag-btn' + (a.placed ? ' checked' : '');
+      placedBtn.title = 'Équipement posé';
+      placedBtn.textContent = '📍';
+
+      placedBtn.addEventListener('click', () => {
+        const idx = state.assignments.findIndex(x => x.unitId === unit.id && x.pointId === pointId);
+        if (idx !== -1) {
+          state.assignments[idx].placed = !state.assignments[idx].placed;
+          saveState();
+          renderBagChecker();
+          renderPoints();
+        }
+      });
+
       const btn = document.createElement('button');
       btn.className = 'bag-btn' + (a.inBag ? ' checked' : '');
+      btn.title = 'Dans le sac';
       btn.textContent = '✓';
 
       btn.addEventListener('click', () => {
@@ -361,6 +377,7 @@ function renderBagChecker() {
         }
       });
 
+      checkCol.appendChild(placedBtn);
       checkCol.appendChild(btn);
       li.appendChild(info);
       li.appendChild(checkCol);
@@ -912,6 +929,11 @@ function renderDetailAssignedList() {
   ul.innerHTML   = '';
   const assigned = state.assignments.filter(a => a.pointId === activePointId);
 
+  const placeAllBtn = document.getElementById('btn-place-all');
+  const allPlaced   = assigned.length && assigned.every(a => a.placed);
+  placeAllBtn.textContent = allPlaced ? '📍 Tout retirer' : '📍 Tout poser';
+  placeAllBtn.disabled    = !assigned.length;
+
   if (!assigned.length) {
     const li = document.createElement('li');
     li.className   = 'detail-empty';
@@ -943,8 +965,14 @@ function renderDetailAssignedList() {
     lblBag.title = 'Dans le sac';
     lblBag.innerHTML = `<input type="checkbox" class="check-in-bag" ${a.inBag ? 'checked' : ''} />Sac`;
 
+    const lblPlaced = document.createElement('label');
+    lblPlaced.className = 'check-toggle' + (a.placed ? ' checked' : '');
+    lblPlaced.title = 'Équipement posé';
+    lblPlaced.innerHTML = `<input type="checkbox" class="check-placed" ${a.placed ? 'checked' : ''} />Posé`;
+
     checks.appendChild(lblConfig);
     checks.appendChild(lblBag);
+    checks.appendChild(lblPlaced);
 
     // Zone centrale : nom + type + catégorie
     const infoDiv = document.createElement('div');
@@ -969,14 +997,17 @@ function renderDetailAssignedList() {
 
     const chkConfigured = li.querySelector('.check-configured');
     const chkInBag = li.querySelector('.check-in-bag');
+    const chkPlaced = li.querySelector('.check-placed');
 
     const persistState = () => {
       const idx = state.assignments.findIndex(x => x.pointId === activePointId && x.unitId === unit.id);
       if (idx !== -1) {
         state.assignments[idx].configured = chkConfigured.checked;
         state.assignments[idx].inBag = chkInBag.checked;
+        state.assignments[idx].placed = chkPlaced.checked;
         lblConfig.classList.toggle('checked', chkConfigured.checked);
         lblBag.classList.toggle('checked', chkInBag.checked);
+        lblPlaced.classList.toggle('checked', chkPlaced.checked);
         saveState();
         updatePointCardColor();
         renderPoints();
@@ -985,6 +1016,7 @@ function renderDetailAssignedList() {
 
     chkConfigured.addEventListener('change', persistState);
     chkInBag.addEventListener('change', persistState);
+    chkPlaced.addEventListener('change', persistState);
 
     retBtn.addEventListener('click', () => {
       state.assignments = state.assignments.filter(
@@ -1164,6 +1196,20 @@ document.getElementById('btn-detail-edit').addEventListener('click', () => setDe
 document.getElementById('btn-detail-edit-close').addEventListener('click', () => setDetailMode('view'));
 document.getElementById('btn-edit-cancel').addEventListener('click', () => setDetailMode('view'));
 
+// Tout poser d'un coup
+document.getElementById('btn-place-all').addEventListener('click', () => {
+  if (!activePointId) return;
+  const assigned = state.assignments.filter(a => a.pointId === activePointId);
+  if (!assigned.length) return;
+  const allPlaced = assigned.every(a => a.placed);
+  assigned.forEach(a => { a.placed = !allPlaced; });
+  saveState();
+  renderDetailAssignedList();
+  updatePointCardColor();
+  renderPoints();
+  renderBagChecker();
+});
+
 document.getElementById('form-edit-point').addEventListener('submit', e => {
   e.preventDefault();
   const name = document.getElementById('edit-point-name').value.trim();
@@ -1188,7 +1234,7 @@ document.getElementById('btn-detail-do-assign').addEventListener('click', () => 
   const unitId = document.getElementById('detail-assign-select').value;
   if (!unitId || !activePointId) return;
   if (state.assignments.find(a => a.unitId === unitId)) return; // déjà assignée
-  state.assignments.push({ pointId: activePointId, unitId, configured: false, inBag: false });
+  state.assignments.push({ pointId: activePointId, unitId, configured: false, inBag: false, placed: false });
   saveState();
   renderDetailAssignedList();
   populateDetailAssignSelect();
