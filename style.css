@@ -55,6 +55,7 @@ nav { display: flex; gap: 4px; }
 .nav-btn { background: transparent; border: none; color: var(--text-muted); padding: 8px 18px; border-radius: var(--radius); cursor: pointer; font-size: .9rem; transition: background .15s, color .15s; }
 .nav-btn:hover { background: var(--surface2); color: var(--text); }
 .nav-btn.active { background: var(--accent); color: #fff; }
+.nav-link { text-decoration: none; display: inline-flex; align-items: center; line-height: 1; }
 
 /* ── Main ── */
 main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
