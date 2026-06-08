@@ -14,12 +14,50 @@ async function loadState() {
   return { categories: [], items: [], units: [], points: [], assignments: [], essentials: [], pointBagConfigs: {} };
 }
 
+// Dernier état connu du serveur (sert à détecter les changements externes)
+let lastSyncedJSON = null;
+let savePending    = false;
+
 function saveState() {
+  const payload  = JSON.stringify(state);
+  lastSyncedJSON = payload;   // on suppose que le serveur aura cette version
+  savePending    = true;
   fetch('/api/state', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(state),
-  }).catch(() => {});
+    body: payload,
+  })
+    .catch(() => {})
+    .finally(() => { savePending = false; });
+}
+
+// Vrai si l'utilisateur est en train de travailler → on ne rafraîchit pas
+function isBusy() {
+  if (document.querySelector('.modal:not(.hidden)')) return true;          // fenêtre ouverte
+  if (draggedPointId) return true;                                          // glisser-déposer
+  const el = document.activeElement;
+  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')) return true; // saisie
+  return false;
+}
+
+// Récupère l'état du serveur et rafraîchit l'affichage si un changement externe est détecté
+async function syncFromServer() {
+  if (savePending || isBusy()) return;   // ne pas écraser un travail/sauvegarde en cours
+  let remoteJSON;
+  try {
+    const res = await fetch('/api/state');
+    if (!res.ok) return;
+    remoteJSON = JSON.stringify(await res.json());
+  } catch (_) { return; }
+
+  if (remoteJSON === lastSyncedJSON) return;   // rien de nouveau
+  if (isBusy()) return;                         // re-vérif après l'await
+
+  state          = JSON.parse(remoteJSON);
+  lastSyncedJSON = remoteJSON;
+  if (!state.essentials) state.essentials = [];
+  if (!state.pointBagConfigs) state.pointBagConfigs = {};
+  renderAll();   // re-render ciblé : conserve l'onglet actif et les sélections
 }
 
 let state;
@@ -1295,4 +1333,13 @@ document.getElementById('btn-reset-inventory').addEventListener('click', () => {
   if (!state.pointBagConfigs) state.pointBagConfigs = {};
 
   renderAll();
+
+  // Référence initiale pour la détection de changements externes
+  lastSyncedJSON = JSON.stringify(state);
+
+  // Auto-refresh : récupère les changements des autres appareils sans recharger la page
+  setInterval(syncFromServer, 4000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') syncFromServer();
+  });
 })();
