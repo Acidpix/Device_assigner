@@ -38,6 +38,15 @@ function pointStateColor(assignments) {
   return 'gris';
 }
 
+// État de pose : 'empty' | 'none' | 'partial' | 'full'
+function placementStatus(assignments) {
+  if (!assignments.length) return 'empty';
+  const placed = assignments.filter(a => a.placed).length;
+  if (placed === 0) return 'none';
+  if (placed === assignments.length) return 'full';
+  return 'partial';
+}
+
 function buildPointPayload(point, data) {
   const assignments = (data.assignments || []).filter(a => a.pointId === point.id);
   const material = assignments.map(a => {
@@ -64,6 +73,7 @@ function buildPointPayload(point, data) {
     desc:    point.desc || null,
     comment: point.comment || null,
     status: pointStateColor(assignments),
+    placedStatus: placementStatus(assignments),
     material,
   };
 }

@@ -213,15 +213,23 @@ function makePointCard(point) {
 
   const card = document.createElement('div');
   const stateColor = getPointStateColor(point.id);
-  card.className = `point-card state-${stateColor}`;
+  const placement  = getPlacementStatus(point.id);
+  card.className = `point-card state-${stateColor}` + (placement === 'full' ? ' placed-full' : '');
   card.setAttribute('role', 'button');
   card.tabIndex = 0;
   card.draggable = !IS_TOUCH;   // réorganisation par glisser-déposer désactivée au tactile
   card.dataset.pointId = point.id;
 
+  let placeBadge = '';
+  if (placement === 'partial')   placeBadge = '<span class="point-place-badge partial">◐ Partiellement posé</span>';
+  else if (placement === 'full') placeBadge = '<span class="point-place-badge full">✓ Posé</span>';
+
   card.innerHTML = `
     <div class="point-card-header">
-      <span class="point-card-name">${point.name}</span>
+      <div class="point-card-title">
+        <span class="point-card-name">${point.name}</span>
+        ${placeBadge}
+      </div>
       <span class="point-click-hint">↗ détails</span>
     </div>
     ${point.desc ? `<div class="point-card-desc">${point.desc}</div>` : ''}
@@ -251,14 +259,22 @@ function getPointStateColor(pointId) {
   return 'gris';
 }
 
+// État de pose : 'empty' (rien d'assigné) | 'none' | 'partial' | 'full'
+function getPlacementStatus(pointId) {
+  const assigned = state.assignments.filter(a => a.pointId === pointId);
+  if (!assigned.length) return 'empty';
+  const placed = assigned.filter(a => a.placed).length;
+  if (placed === 0) return 'none';
+  if (placed === assigned.length) return 'full';
+  return 'partial';
+}
+
 function updatePointCardColor() {
   if (!activePointId) return;
-  const color = getPointStateColor(activePointId);
-  document.querySelectorAll('.point-card').forEach(card => {
-    if (card.dataset.pointId === activePointId) {
-      card.className = `point-card state-${color}`;
-    }
-  });
+  const point = getPoint(activePointId);
+  if (!point) return;
+  const card = document.querySelector(`.point-card[data-point-id="${activePointId}"]`);
+  if (card) card.replaceWith(makePointCard(point));   // recrée la carte : couleur, fond posé et badge à jour
 }
 
 function attachPointDragListeners(el) {

@@ -42,7 +42,9 @@ X-Api-Key: mon_secret
     "id": "abc123",
     "name": "Scène principale",
     "desc": "Face à la scène",
+    "comment": "Prévoir une rallonge",
     "status": "bleu",
+    "placedStatus": "partial",
     "material": [
       {
         "unitId": "unit456",
@@ -96,7 +98,9 @@ X-Api-Key: mon_secret
 | `id` | string | Identifiant unique |
 | `name` | string | Nom du point |
 | `desc` | string \| null | Description optionnelle |
-| `status` | string | État global (voir ci-dessous) |
+| `comment` | string \| null | Commentaire libre du point |
+| `status` | string | État global config/sac (voir ci-dessous) |
+| `placedStatus` | string | État de pose du matériel (voir ci-dessous) |
 | `material` | array | Liste des unités assignées |
 
 ### Valeurs de `status`
@@ -108,6 +112,15 @@ X-Api-Key: mon_secret
 | `bleu` | Tout configuré, pas encore en sac |
 | `rouge` | Tout en sac, pas encore configuré |
 | `vert` | Tout configuré et en sac — prêt |
+
+### Valeurs de `placedStatus`
+
+| Valeur | Signification |
+|--------|---------------|
+| `empty` | Aucun matériel assigné |
+| `none` | Rien de posé |
+| `partial` | Une partie du matériel est posée |
+| `full` | Tout le matériel est posé |
 
 ### Objet `material[n]`
 
