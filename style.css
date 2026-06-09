@@ -166,6 +166,32 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .legend-dot.vert  { border-color: #00b894; }
 .legend-dot.rouge { border-color: #e05c5c; }
 
+/* ── Mode Configuration ── */
+#btn-config-mode.toggle-on { background: var(--accent); color: #fff; border-color: var(--accent); }
+#config-mode-list { display: none; }
+#tab-points.config-mode #points-grid,
+#tab-points.config-mode .points-legend,
+#tab-points.config-mode #btn-toggle-points-view,
+#tab-points.config-mode #btn-add-point { display: none; }
+#tab-points.config-mode #config-mode-list { display: block; }
+
+.config-cat-block { margin-bottom: 28px; }
+.config-cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.config-cat-header h3 { font-size: 1.05rem; font-weight: 600; }
+.config-type-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; }
+.config-type-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+.config-type-name { font-weight: 600; font-size: .95rem; }
+.config-type-count { font-size: .8rem; color: var(--text-muted); }
+.config-type-all { margin-left: auto; }
+.config-unit-row { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid var(--border); }
+.config-check { width: 48px; height: 48px; flex-shrink: 0; border-radius: 10px; border: 2px solid var(--border); background: var(--surface2); color: var(--text-muted); font-size: 1.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s, color .15s; }
+.config-check:active { transform: scale(.95); }
+.config-check.checked { background: rgba(0,184,148,.18); border-color: var(--success); color: var(--success); }
+.config-unit-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.config-unit-name { font-weight: 500; font-size: .95rem; }
+.config-unit-point { font-size: .8rem; color: var(--text-muted); }
+.config-unit-row.done .config-unit-name { color: var(--text-muted); }
+
 /* ── Bag Checker ── */
 .bag-checker-container { max-width: 640px; margin: 0 auto; padding: 0 16px; }
 .bag-checker-control { margin-bottom: 28px; }

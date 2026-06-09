@@ -382,6 +382,118 @@ function renderPoints() {
   });
 }
 
+// ── Mode Configuration (matériel groupé par catégorie / type) ───────────────
+
+let configMode = false;
+
+function toggleConfigMode() {
+  configMode = !configMode;
+  applyConfigMode();
+}
+
+function applyConfigMode() {
+  const tab = document.getElementById('tab-points');
+  tab.classList.toggle('config-mode', configMode);
+  const btn = document.getElementById('btn-config-mode');
+  btn.classList.toggle('toggle-on', configMode);
+  btn.textContent = (configMode ? '✓ Mode Configuration' : '⚙ Mode Configuration');
+  if (configMode) renderConfigMode();
+}
+
+function renderConfigMode() {
+  const container = document.getElementById('config-mode-list');
+  container.innerHTML = '';
+
+  // Toutes les unités assignées (une assignation = configurable)
+  const assigned = state.assignments
+    .map(a => { const unit = getUnit(a.unitId); return unit ? { a, unit } : null; })
+    .filter(Boolean);
+
+  if (!assigned.length) {
+    container.innerHTML = '<div class="empty-state">Aucun matériel assigné à configurer. Assignez d\'abord du matériel à des points.</div>';
+    return;
+  }
+
+  // Regroupement par type (item)
+  const byItem = {};
+  assigned.forEach(r => { (byItem[r.unit.itemId] = byItem[r.unit.itemId] || []).push(r); });
+
+  state.categories.forEach(cat => {
+    const items = state.items.filter(i => i.catId === cat.id && byItem[i.id]);
+    if (!items.length) return;
+
+    const catBlock = document.createElement('div');
+    catBlock.className = 'config-cat-block';
+    catBlock.innerHTML = `<div class="config-cat-header"><span class="cat-dot" style="background:${cat.color}"></span><h3>${cat.name}</h3></div>`;
+
+    items.forEach(item => {
+      const rows = byItem[item.id].slice().sort((x, y) => {
+        const px = getPoint(x.a.pointId)?.name || '';
+        const py = getPoint(y.a.pointId)?.name || '';
+        return px.localeCompare(py) || x.unit.name.localeCompare(y.unit.name);
+      });
+
+      const typeBlock = document.createElement('div');
+      typeBlock.className = 'config-type-block';
+
+      const header = document.createElement('div');
+      header.className = 'config-type-header';
+      const doneCount = rows.filter(r => r.a.configured).length;
+      header.innerHTML = `
+        <span class="config-type-name">${item.name}</span>
+        <span class="config-type-count">${doneCount}/${rows.length} configurés</span>`;
+
+      const allBtn = document.createElement('button');
+      allBtn.className = 'btn-ghost btn-sm config-type-all';
+      allBtn.textContent = doneCount === rows.length ? 'Tout décocher' : 'Tout configurer';
+      allBtn.addEventListener('click', () => {
+        const target = doneCount !== rows.length;     // si pas tout fait → tout cocher
+        rows.forEach(r => { r.a.configured = target; });
+        saveState();
+        rows.forEach(r => refreshPointCard(r.a.pointId));
+        renderConfigMode();
+      });
+      header.appendChild(allBtn);
+      typeBlock.appendChild(header);
+
+      rows.forEach(({ a, unit }) => {
+        const point = getPoint(a.pointId);
+        const row = document.createElement('div');
+        row.className = 'config-unit-row' + (a.configured ? ' done' : '');
+
+        const btn = document.createElement('button');
+        btn.className = 'config-check' + (a.configured ? ' checked' : '');
+        btn.textContent = '✓';
+        btn.title = 'Configuration faite';
+
+        const info = document.createElement('div');
+        info.className = 'config-unit-info';
+        info.innerHTML = `<span class="config-unit-name">${unit.name}</span><span class="config-unit-point">→ ${point ? point.name : '—'}</span>`;
+
+        btn.addEventListener('click', () => {
+          const v = !a.configured;
+          a.configured = v;
+          btn.classList.toggle('checked', v);
+          row.classList.toggle('done', v);
+          const newDone = rows.filter(r => r.a.configured).length;
+          header.querySelector('.config-type-count').textContent = `${newDone}/${rows.length} configurés`;
+          allBtn.textContent = newDone === rows.length ? 'Tout décocher' : 'Tout configurer';
+          saveState();
+          refreshPointCard(a.pointId);
+        });
+
+        row.appendChild(btn);
+        row.appendChild(info);
+        typeBlock.appendChild(row);
+      });
+
+      catBlock.appendChild(typeBlock);
+    });
+
+    container.appendChild(catBlock);
+  });
+}
+
 // ── Essentials filtering ───────────────────────────────────────────────────
 
 function essentialApplies(ess, pointId) {
@@ -1200,6 +1312,7 @@ function renderAll() {
   renderBagChecker();
   renderAdmin();
   updatePointsViewButton();
+  if (configMode) renderConfigMode();   // garde la vue config à jour après une synchro
 }
 
 function updatePointsViewButton() {
@@ -1288,6 +1401,7 @@ document.getElementById('form-add-item').addEventListener('submit', e => {
 
 // Basculer vue points
 document.getElementById('btn-toggle-points-view').addEventListener('click', togglePointsView);
+document.getElementById('btn-config-mode').addEventListener('click', toggleConfigMode);
 
 // Ajouter point
 document.getElementById('btn-add-point').addEventListener('click', openAddPointModal);
