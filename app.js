@@ -17,15 +17,29 @@ async function loadState() {
 // Dernier état connu du serveur (sert à détecter les changements externes)
 let lastSyncedJSON = null;
 let savePending    = false;
+let lastSaveAt     = 0;     // horodatage du dernier envoi (évite d'appliquer un écho périmé)
+
+// Sérialisation déterministe (clés triées) : permet de comparer deux états
+// indépendamment de l'ordre des clés que renvoie le serveur après fusion.
+function stableStringify(obj) {
+  return JSON.stringify(obj, (_key, value) =>
+    (value && typeof value === 'object' && !Array.isArray(value))
+      ? Object.keys(value).sort().reduce((s, k) => { s[k] = value[k]; return s; }, {})
+      : value
+  );
+}
 
 function saveState() {
-  const payload  = JSON.stringify(state);
-  lastSyncedJSON = payload;   // on suppose que le serveur aura cette version
+  // On envoie l'avant (base = dernier état serveur connu) et l'après (next).
+  // Le serveur n'applique que la différence → pas d'écrasement des autres.
+  const base     = lastSyncedJSON ? JSON.parse(lastSyncedJSON) : null;
+  lastSyncedJSON = stableStringify(state);   // nos modifs sont désormais « parties »
+  lastSaveAt     = Date.now();
   savePending    = true;
   fetch('/api/state', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: payload,
+    body: JSON.stringify({ base, next: state }),
   })
     .catch(() => {})
     .finally(() => { savePending = false; });
@@ -40,24 +54,43 @@ function isBusy() {
   return false;
 }
 
-// Récupère l'état du serveur et rafraîchit l'affichage si un changement externe est détecté
-async function syncFromServer() {
-  if (savePending || isBusy()) return;   // ne pas écraser un travail/sauvegarde en cours
-  let remoteJSON;
-  try {
-    const res = await fetch('/api/state');
-    if (!res.ok) return;
-    remoteJSON = JSON.stringify(await res.json());
-  } catch (_) { return; }
+// Dernier état reçu mais non appliqué car l'utilisateur travaillait (modal/saisie)
+let pendingRemote = null;
 
-  if (remoteJSON === lastSyncedJSON) return;   // rien de nouveau
-  if (isBusy()) return;                         // re-vérif après l'await
+// Applique un état distant si rien n'est en cours ; sinon le met de côté
+function applyRemoteState(remoteObj) {
+  if (!remoteObj) return;
+  const remoteJSON = stableStringify(remoteObj);
+  if (remoteJSON === lastSyncedJSON) { pendingRemote = null; return; }   // déjà à jour
+  // Différer si : sauvegarde en cours, utilisateur occupé, ou écho juste après notre envoi
+  if (savePending || isBusy() || Date.now() - lastSaveAt < 1200) { pendingRemote = remoteObj; return; }
 
-  state          = JSON.parse(remoteJSON);
+  state          = remoteObj;
   lastSyncedJSON = remoteJSON;
+  pendingRemote  = null;
   if (!state.essentials) state.essentials = [];
   if (!state.pointBagConfigs) state.pointBagConfigs = {};
   renderAll();   // re-render ciblé : conserve l'onglet actif et les sélections
+}
+
+// Récupère l'état du serveur (utilisé comme filet de sécurité si le flux SSE tombe)
+async function syncFromServer() {
+  if (savePending || isBusy()) return;
+  try {
+    const res = await fetch('/api/state');
+    if (!res.ok) return;
+    applyRemoteState(await res.json());
+  } catch (_) { /* hors ligne : on réessaiera */ }
+}
+
+// Connexion au flux temps réel : le serveur pousse l'état à chaque changement
+function connectEventStream() {
+  if (typeof EventSource === 'undefined') return;   // navigateur trop ancien → poll seul
+  const es = new EventSource('/api/events');
+  es.onmessage = e => {
+    try { applyRemoteState(JSON.parse(e.data)); } catch (_) {}
+  };
+  // EventSource se reconnecte tout seul ; on ne ferme jamais volontairement.
 }
 
 let state;
@@ -1365,10 +1398,18 @@ document.getElementById('btn-reset-inventory').addEventListener('click', () => {
   renderAll();
 
   // Référence initiale pour la détection de changements externes
-  lastSyncedJSON = JSON.stringify(state);
+  lastSyncedJSON = stableStringify(state);
 
-  // Auto-refresh : récupère les changements des autres appareils sans recharger la page
-  setInterval(syncFromServer, 4000);
+  // Temps réel : le serveur pousse les changements via SSE
+  connectEventStream();
+
+  // Applique un état différé dès que l'utilisateur a fini (modal fermée / saisie terminée)
+  setInterval(() => {
+    if (pendingRemote && !savePending && !isBusy()) applyRemoteState(pendingRemote);
+  }, 1500);
+
+  // Filet de sécurité : si le flux SSE tombe sans que le navigateur s'en aperçoive
+  setInterval(syncFromServer, 20000);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') syncFromServer();
   });

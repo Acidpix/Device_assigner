@@ -87,6 +87,18 @@ server {
     gzip on;
     gzip_types text/css application/javascript text/html application/json;
 
+    # Flux temps réel (SSE) — pas de tampon, connexion longue
+    location /api/events {
+        proxy_pass            http://127.0.0.1:${PORT_API};
+        proxy_http_version    1.1;
+        proxy_set_header      Host \$host;
+        proxy_set_header      Connection '';
+        proxy_buffering       off;
+        proxy_cache           off;
+        chunked_transfer_encoding off;
+        proxy_read_timeout    3600s;
+    }
+
     # Proxy vers l'API Node.js
     location /api/ {
         proxy_pass         http://127.0.0.1:${PORT_API};
