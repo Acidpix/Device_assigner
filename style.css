@@ -179,7 +179,11 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .config-cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .config-cat-header h3 { font-size: 1.05rem; font-weight: 600; }
 .config-type-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; }
-.config-type-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+.config-type-header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; cursor: pointer; user-select: none; }
+.config-type-block:not(.collapsed) .config-type-header { margin-bottom: 6px; }
+.config-type-chevron { color: var(--text-muted); font-size: .8rem; transition: transform .15s; }
+.config-type-block.collapsed .config-type-chevron { transform: rotate(-90deg); }
+.config-type-block.collapsed .config-unit-row { display: none; }
 .config-type-name { font-weight: 600; font-size: .95rem; }
 .config-type-count { font-size: .8rem; color: var(--text-muted); }
 .config-type-all { margin-left: auto; }
@@ -187,10 +191,12 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .config-check { width: 48px; height: 48px; flex-shrink: 0; border-radius: 10px; border: 2px solid var(--border); background: var(--surface2); color: var(--text-muted); font-size: 1.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s, color .15s; }
 .config-check:active { transform: scale(.95); }
 .config-check.checked { background: rgba(0,184,148,.18); border-color: var(--success); color: var(--success); }
-.config-unit-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.config-unit-name { font-weight: 500; font-size: .95rem; }
-.config-unit-point { font-size: .8rem; color: var(--text-muted); }
+.config-unit-name { flex: 1; min-width: 0; font-weight: 500; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .config-unit-row.done .config-unit-name { color: var(--text-muted); }
+.config-unit-point-btn { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: rgba(124,92,252,.12); color: var(--accent); border: 1px solid rgba(124,92,252,.4); padding: 9px 14px; border-radius: 9px; font-size: .98rem; font-weight: 700; cursor: pointer; transition: background .15s, border-color .15s; white-space: nowrap; }
+.config-unit-point-btn:hover { background: rgba(124,92,252,.24); border-color: var(--accent); }
+.config-unit-point-btn:active { transform: scale(.97); }
+.config-unit-point-btn .cup-arrow { font-size: 1.1rem; line-height: 1; }
 
 /* ── Bag Checker ── */
 .bag-checker-container { max-width: 640px; margin: 0 auto; padding: 0 16px; }

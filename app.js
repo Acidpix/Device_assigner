@@ -382,9 +382,10 @@ function renderPoints() {
   });
 }
 
-// ── Mode Configuration (matériel groupé par catégorie / type) ───────────────
+// ── Vue « Par type » (matériel groupé par catégorie / type) ─────────────────
 
 let configMode = false;
+const collapsedTypes = new Set();   // ids de types repliés (mémorisé pendant la session)
 
 function toggleConfigMode() {
   configMode = !configMode;
@@ -396,8 +397,15 @@ function applyConfigMode() {
   tab.classList.toggle('config-mode', configMode);
   const btn = document.getElementById('btn-config-mode');
   btn.classList.toggle('toggle-on', configMode);
-  btn.textContent = (configMode ? '✓ Mode Configuration' : '⚙ Mode Configuration');
+  btn.textContent = (configMode ? '✓ Par type' : '⚙ Par type');
   if (configMode) renderConfigMode();
+}
+
+// Ouvre la fiche d'un point depuis la vue « Par type » (repasse en vue normale)
+function openPointFromConfig(pointId) {
+  configMode = false;
+  applyConfigMode();
+  openPointDetail(pointId);
 }
 
 function renderConfigMode() {
@@ -434,26 +442,34 @@ function renderConfigMode() {
       });
 
       const typeBlock = document.createElement('div');
-      typeBlock.className = 'config-type-block';
+      typeBlock.className = 'config-type-block' + (collapsedTypes.has(item.id) ? ' collapsed' : '');
 
       const header = document.createElement('div');
       header.className = 'config-type-header';
       const doneCount = rows.filter(r => r.a.configured).length;
       header.innerHTML = `
+        <span class="config-type-chevron">▾</span>
         <span class="config-type-name">${item.name}</span>
         <span class="config-type-count">${doneCount}/${rows.length} configurés</span>`;
 
       const allBtn = document.createElement('button');
       allBtn.className = 'btn-ghost btn-sm config-type-all';
       allBtn.textContent = doneCount === rows.length ? 'Tout décocher' : 'Tout configurer';
-      allBtn.addEventListener('click', () => {
-        const target = doneCount !== rows.length;     // si pas tout fait → tout cocher
+      allBtn.addEventListener('click', (e) => {
+        e.stopPropagation();                           // ne pas replier en cliquant le bouton
+        const target = doneCount !== rows.length;      // si pas tout fait → tout cocher
         rows.forEach(r => { r.a.configured = target; });
         saveState();
         rows.forEach(r => refreshPointCard(r.a.pointId));
         renderConfigMode();
       });
       header.appendChild(allBtn);
+
+      // Clic sur l'en-tête (hors bouton) → replier / déplier le type
+      header.addEventListener('click', () => {
+        const collapsed = typeBlock.classList.toggle('collapsed');
+        if (collapsed) collapsedTypes.add(item.id); else collapsedTypes.delete(item.id);
+      });
       typeBlock.appendChild(header);
 
       rows.forEach(({ a, unit }) => {
@@ -466,9 +482,16 @@ function renderConfigMode() {
         btn.textContent = '✓';
         btn.title = 'Configuration faite';
 
-        const info = document.createElement('div');
-        info.className = 'config-unit-info';
-        info.innerHTML = `<span class="config-unit-name">${unit.name}</span><span class="config-unit-point">→ ${point ? point.name : '—'}</span>`;
+        const name = document.createElement('span');
+        name.className = 'config-unit-name';
+        name.textContent = unit.name;
+
+        const pointBtn = document.createElement('button');
+        pointBtn.className = 'config-unit-point-btn';
+        pointBtn.title = 'Ouvrir la fiche de ce point';
+        pointBtn.innerHTML = `<span class="cup-arrow">➜</span><span>${point ? point.name : '—'}</span>`;
+        if (point) pointBtn.addEventListener('click', () => openPointFromConfig(point.id));
+        else pointBtn.disabled = true;
 
         btn.addEventListener('click', () => {
           const v = !a.configured;
@@ -483,7 +506,8 @@ function renderConfigMode() {
         });
 
         row.appendChild(btn);
-        row.appendChild(info);
+        row.appendChild(name);
+        row.appendChild(pointBtn);
         typeBlock.appendChild(row);
       });
 
