@@ -385,7 +385,7 @@ function renderPoints() {
 // ── Vue « Par type » (matériel groupé par catégorie / type) ─────────────────
 
 let configMode = false;
-const collapsedTypes = new Set();   // ids de types repliés (mémorisé pendant la session)
+const expandedTypes = new Set();   // ids de types dépliés ; par défaut tout est replié
 
 function toggleConfigMode() {
   configMode = !configMode;
@@ -442,7 +442,7 @@ function renderConfigMode() {
       });
 
       const typeBlock = document.createElement('div');
-      typeBlock.className = 'config-type-block' + (collapsedTypes.has(item.id) ? ' collapsed' : '');
+      typeBlock.className = 'config-type-block' + (expandedTypes.has(item.id) ? '' : ' collapsed');
 
       const header = document.createElement('div');
       header.className = 'config-type-header';
@@ -468,7 +468,7 @@ function renderConfigMode() {
       // Clic sur l'en-tête (hors bouton) → replier / déplier le type
       header.addEventListener('click', () => {
         const collapsed = typeBlock.classList.toggle('collapsed');
-        if (collapsed) collapsedTypes.add(item.id); else collapsedTypes.delete(item.id);
+        if (collapsed) expandedTypes.delete(item.id); else expandedTypes.add(item.id);
       });
       typeBlock.appendChild(header);
 
