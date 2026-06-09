@@ -17,7 +17,9 @@ async function loadState() {
 // Dernier état connu du serveur (sert à détecter les changements externes)
 let lastSyncedJSON = null;
 let savePending    = false;
-let lastSaveAt     = 0;     // horodatage du dernier envoi (évite d'appliquer un écho périmé)
+let lastSaveAt     = 0;     // horodatage de la dernière modif (évite d'appliquer un écho périmé)
+let saveTimer      = null;
+const SAVE_DEBOUNCE = 350;  // ms : on regroupe les clics rapides en un seul envoi réseau
 
 // Sérialisation déterministe (clés triées) : permet de comparer deux états
 // indépendamment de l'ordre des clés que renvoie le serveur après fusion.
@@ -29,17 +31,32 @@ function stableStringify(obj) {
   );
 }
 
+// L'UI se met à jour tout de suite ; l'envoi réseau est différé (regroupé).
 function saveState() {
-  // On envoie l'avant (base = dernier état serveur connu) et l'après (next).
-  // Le serveur n'applique que la différence → pas d'écrasement des autres.
-  const base     = lastSyncedJSON ? JSON.parse(lastSyncedJSON) : null;
-  lastSyncedJSON = stableStringify(state);   // nos modifs sont désormais « parties »
+  lastSaveAt = Date.now();                 // marque l'intention → diffère les échos SSE
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, SAVE_DEBOUNCE);
+}
+
+// Envoi réel : diff base→next. base est déjà une chaîne JSON (pas de re-sérialisation).
+function flushSave(useBeacon) {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  const baseStr = lastSyncedJSON || 'null';
+  const nextStr = stableStringify(state);
+  if (nextStr === lastSyncedJSON) return;  // rien de neuf à envoyer
+  lastSyncedJSON = nextStr;
   lastSaveAt     = Date.now();
-  savePending    = true;
+  const body = `{"base":${baseStr},"next":${nextStr}}`;
+
+  if (useBeacon && navigator.sendBeacon) {  // fermeture d'onglet : envoi fiable
+    navigator.sendBeacon('/api/state', new Blob([body], { type: 'application/json' }));
+    return;
+  }
+  savePending = true;
   fetch('/api/state', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ base, next: state }),
+    body,
   })
     .catch(() => {})
     .finally(() => { savePending = false; });
@@ -302,12 +319,16 @@ function getPlacementStatus(pointId) {
   return 'partial';
 }
 
-function updatePointCardColor() {
-  if (!activePointId) return;
-  const point = getPoint(activePointId);
+// Recrée une seule carte (couleur, fond posé, badge) sans toucher au reste de la grille
+function refreshPointCard(pointId) {
+  const point = getPoint(pointId);
   if (!point) return;
-  const card = document.querySelector(`.point-card[data-point-id="${activePointId}"]`);
-  if (card) card.replaceWith(makePointCard(point));   // recrée la carte : couleur, fond posé et badge à jour
+  const card = document.querySelector(`.point-card[data-point-id="${pointId}"]`);
+  if (card) card.replaceWith(makePointCard(point));
+}
+
+function updatePointCardColor() {
+  if (activePointId) refreshPointCard(activePointId);
 }
 
 function attachPointDragListeners(el) {
@@ -453,10 +474,11 @@ function renderBagChecker() {
       placedBtn.addEventListener('click', () => {
         const idx = state.assignments.findIndex(x => x.unitId === unit.id && x.pointId === pointId);
         if (idx !== -1) {
-          state.assignments[idx].placed = !state.assignments[idx].placed;
+          const v = !state.assignments[idx].placed;
+          state.assignments[idx].placed = v;
+          placedBtn.classList.toggle('checked', v);
           saveState();
-          renderBagChecker();
-          renderPoints();
+          refreshPointCard(pointId);
         }
       });
 
@@ -468,10 +490,12 @@ function renderBagChecker() {
       btn.addEventListener('click', () => {
         const idx = state.assignments.findIndex(x => x.unitId === unit.id && x.pointId === pointId);
         if (idx !== -1) {
-          state.assignments[idx].inBag = !state.assignments[idx].inBag;
+          const v = !state.assignments[idx].inBag;
+          state.assignments[idx].inBag = v;
+          btn.classList.toggle('checked', v);
+          info.classList.toggle('in-bag', v);
           saveState();
-          renderBagChecker();
-          renderPoints();
+          refreshPointCard(pointId);
         }
       });
 
@@ -528,9 +552,11 @@ function renderBagChecker() {
 
       btn.addEventListener('click', () => {
         if (!state.pointBagConfigs[pointId]) state.pointBagConfigs[pointId] = {};
-        state.pointBagConfigs[pointId][ess.id] = !state.pointBagConfigs[pointId][ess.id];
+        const v = !state.pointBagConfigs[pointId][ess.id];
+        state.pointBagConfigs[pointId][ess.id] = v;
+        btn.classList.toggle('checked', v);
+        info.classList.toggle('in-bag', v);
         saveState();
-        renderBagChecker();
       });
 
       checkCol.appendChild(btn);
@@ -1411,6 +1437,8 @@ document.getElementById('btn-reset-inventory').addEventListener('click', () => {
   // Filet de sécurité : si le flux SSE tombe sans que le navigateur s'en aperçoive
   setInterval(syncFromServer, 20000);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') syncFromServer();
+    if (document.hidden) flushSave(true);          // onglet masqué → on persiste tout de suite
+    else syncFromServer();
   });
+  window.addEventListener('pagehide', () => flushSave(true));   // fermeture/navigation
 })();
