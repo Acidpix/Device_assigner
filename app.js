@@ -599,6 +599,13 @@ function renderBagChecker() {
       info.appendChild(nameSpan);
       info.appendChild(badge);
 
+      if (a.location) {
+        const loc = document.createElement('span');
+        loc.className = 'bag-item-location';
+        loc.textContent = '📍 ' + a.location;
+        info.appendChild(loc);
+      }
+
       const checkCol = document.createElement('div');
       checkCol.className = 'bag-check-col';
 
@@ -1234,7 +1241,7 @@ function renderDetailAssignedList() {
     checks.appendChild(lblBag);
     checks.appendChild(lblPlaced);
 
-    // Zone centrale : nom + type + catégorie
+    // Zone centrale : nom + type + catégorie + emplacement
     const infoDiv = document.createElement('div');
     infoDiv.className = 'assigned-row-info';
     infoDiv.innerHTML = `
@@ -1242,6 +1249,18 @@ function renderDetailAssignedList() {
       ${item ? `<span class="assigned-row-meta">${item.name}</span>` : ''}
       ${cat ? `<span class="assigned-row-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
     `;
+
+    // Champ Location éditable (où se situe l'équipement sur le point)
+    const locInput = document.createElement('input');
+    locInput.type = 'text';
+    locInput.className = 'assigned-row-location';
+    locInput.placeholder = '📍 Emplacement sur le point…';
+    locInput.value = a.location || '';
+    locInput.addEventListener('input', () => {
+      const idx = state.assignments.findIndex(x => x.pointId === activePointId && x.unitId === unit.id);
+      if (idx !== -1) { state.assignments[idx].location = locInput.value; saveState(); }
+    });
+    infoDiv.appendChild(locInput);
 
     // Bouton retirer
     const actionsDiv = document.createElement('div');
@@ -1493,7 +1512,8 @@ document.getElementById('btn-detail-do-assign').addEventListener('click', () => 
   const unitId = document.getElementById('detail-assign-select').value;
   if (!unitId || !activePointId) return;
   if (state.assignments.find(a => a.unitId === unitId)) return; // déjà assignée
-  state.assignments.push({ pointId: activePointId, unitId, configured: false, inBag: false, placed: false });
+  // Nouvelle assignation : location repart toujours vide (l'ancienne a été supprimée au désassignement)
+  state.assignments.push({ pointId: activePointId, unitId, configured: false, inBag: false, placed: false, location: '' });
   saveState();
   renderDetailAssignedList();
   populateDetailAssignSelect();

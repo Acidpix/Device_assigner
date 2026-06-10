@@ -53,6 +53,7 @@ X-Api-Key: mon_secret
         "configured": true,
         "inBag": false,
         "placed": false,
+        "location": "Régie, rack 2",
         "item": {
           "id": "item789",
           "name": "Talkie-walkie",
@@ -132,6 +133,7 @@ X-Api-Key: mon_secret
 | `configured` | boolean | L'unité a été configurée |
 | `inBag` | boolean | L'unité est dans le sac du point |
 | `placed` | boolean | L'équipement a été posé / installé sur le point |
+| `location` | string \| null | Emplacement de l'équipement sur le point (champ libre) |
 | `item` | object \| null | Type de matériel |
 | `item.id` | string | Identifiant du type |
 | `item.name` | string | Nom du type (ex : "Talkie-walkie") |

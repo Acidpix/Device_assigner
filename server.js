@@ -172,6 +172,7 @@ function buildPointPayload(point, data) {
       configured: a.configured || false,
       inBag:      a.inBag      || false,
       placed:     a.placed     || false,
+      location:   a.location   || null,
       item: item ? {
         id:   item.id,
         name: item.name,
