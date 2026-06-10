@@ -76,7 +76,7 @@
 
           <div class="bag-comment-block">
             <div class="bag-section-header">
-              <h3>📝 Commentaire du point</h3>
+              <h3>Commentaire du point</h3>
             </div>
             <textarea id="bag-checker-comment" class="bag-comment-input" rows="3" placeholder="Note spécifique à ce point de distribution…"></textarea>
           </div>
@@ -144,6 +144,18 @@
               <button type="submit" class="btn-primary">Ajouter</button>
             </form>
             <ul id="items-accordion-body" class="items-accordion-list"></ul>
+          </div>
+        </div>
+
+        <!-- Import / Export du stock -->
+        <div class="admin-card" style="margin-top:24px">
+          <h3>Import / Export du stock</h3>
+          <p class="admin-hint">Sauvegarde ou chargement du matériel (catégories, types et unités) au format JSON. N'affecte pas les points, assignations ni indispensables.</p>
+          <div class="io-actions">
+            <button type="button" id="btn-export-stock" class="btn-primary">⬇ Exporter le stock</button>
+            <button type="button" id="btn-import-replace" class="btn-ghost">⬆ Importer — remplacer</button>
+            <button type="button" id="btn-import-merge" class="btn-ghost">⬆ Importer — fusionner</button>
+            <input type="file" id="input-import-stock" accept="application/json,.json" hidden />
           </div>
         </div>
       </div>

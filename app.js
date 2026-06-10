@@ -482,9 +482,22 @@ function renderConfigMode() {
         btn.textContent = '✓';
         btn.title = 'Configuration faite';
 
+        const main = document.createElement('div');
+        main.className = 'config-unit-main';
+
         const name = document.createElement('span');
         name.className = 'config-unit-name';
         name.textContent = unit.name;
+
+        const locInput = document.createElement('input');
+        locInput.type = 'text';
+        locInput.className = 'config-unit-location';
+        locInput.placeholder = '📍 Emplacement sur le point…';
+        locInput.value = a.location || '';
+        locInput.addEventListener('input', () => { a.location = locInput.value; saveState(); });
+
+        main.appendChild(name);
+        main.appendChild(locInput);
 
         const pointBtn = document.createElement('button');
         pointBtn.className = 'config-unit-point-btn';
@@ -506,7 +519,7 @@ function renderConfigMode() {
         });
 
         row.appendChild(btn);
-        row.appendChild(name);
+        row.appendChild(main);
         row.appendChild(pointBtn);
         typeBlock.appendChild(row);
       });
@@ -602,7 +615,7 @@ function renderBagChecker() {
       if (a.location) {
         const loc = document.createElement('span');
         loc.className = 'bag-item-location';
-        loc.textContent = '📍 ' + a.location;
+        loc.textContent = a.location;
         info.appendChild(loc);
       }
 
@@ -612,7 +625,7 @@ function renderBagChecker() {
       const placedBtn = document.createElement('button');
       placedBtn.className = 'bag-btn' + (a.placed ? ' checked' : '');
       placedBtn.title = 'Équipement posé';
-      placedBtn.textContent = '📍';
+      placedBtn.textContent = '✓';
 
       placedBtn.addEventListener('click', () => {
         const idx = state.assignments.findIndex(x => x.unitId === unit.id && x.pointId === pointId);
@@ -1537,6 +1550,108 @@ document.getElementById('btn-reset-inventory').addEventListener('click', () => {
   state.assignments = [];
   saveState();
   renderAll();
+});
+
+// ── Import / Export du stock (catégories + types + unités) ──────────────────
+
+function exportStock() {
+  const stock = {
+    type: 'solidays-stock',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    categories: state.categories,
+    items: state.items,
+    units: state.units,
+  };
+  const blob = new Blob([JSON.stringify(stock, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const d = new Date();
+  const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const aEl = document.createElement('a');
+  aEl.href = url;
+  aEl.download = `stock-solidays-${stamp}.json`;
+  document.body.appendChild(aEl);
+  aEl.click();
+  aEl.remove();
+  URL.revokeObjectURL(url);
+}
+
+function validateStock(data) {
+  return data && Array.isArray(data.categories) && Array.isArray(data.items) && Array.isArray(data.units);
+}
+
+function importStockReplace(data) {
+  state.categories = data.categories.map(c => ({ id: c.id, name: c.name, color: c.color }));
+  state.items      = data.items.map(i => ({ id: i.id, name: i.name, catId: i.catId }));
+  state.units      = data.units.map(u => {
+    const unit = { id: u.id, itemId: u.itemId, name: u.name };
+    if (u.serialNumber != null) unit.serialNumber = u.serialNumber;
+    if (u.inventaire === false) unit.inventaire = false;
+    return unit;
+  });
+  // Les assignations vers des unités disparues n'ont plus de sens
+  const unitIds = new Set(state.units.map(u => u.id));
+  state.assignments = state.assignments.filter(a => unitIds.has(a.unitId));
+}
+
+function importStockMerge(data) {
+  const catIdMap = {};
+  data.categories.forEach(c => {
+    const ex = state.categories.find(x => x.name.toLowerCase() === (c.name || '').toLowerCase());
+    if (ex) { catIdMap[c.id] = ex.id; return; }
+    const id = state.categories.some(x => x.id === c.id) ? uid() : c.id;
+    state.categories.push({ id, name: c.name, color: c.color });
+    catIdMap[c.id] = id;
+  });
+  const itemIdMap = {};
+  data.items.forEach(i => {
+    const catId = catIdMap[i.catId] || i.catId;
+    const ex = state.items.find(x => x.catId === catId && x.name.toLowerCase() === (i.name || '').toLowerCase());
+    if (ex) { itemIdMap[i.id] = ex.id; return; }
+    const id = state.items.some(x => x.id === i.id) ? uid() : i.id;
+    state.items.push({ id, name: i.name, catId });
+    itemIdMap[i.id] = id;
+  });
+  data.units.forEach(u => {
+    const itemId = itemIdMap[u.itemId] || u.itemId;
+    if (!state.items.some(x => x.id === itemId)) return;          // type inconnu → on ignore
+    if (state.units.some(x => x.itemId === itemId && x.name.toLowerCase() === (u.name || '').toLowerCase())) return; // doublon
+    const id = state.units.some(x => x.id === u.id) ? uid() : u.id;
+    const unit = { id, itemId, name: u.name };
+    if (u.serialNumber != null) unit.serialNumber = u.serialNumber;
+    if (u.inventaire === false) unit.inventaire = false;
+    state.units.push(unit);
+  });
+}
+
+function handleImportFile(file, mode) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); } catch (_) { alert('Fichier JSON invalide.'); return; }
+    if (!validateStock(data)) { alert('Ce fichier ne contient pas un stock valide (catégories / types / unités).'); return; }
+    const counts = `${data.categories.length} catégorie(s), ${data.items.length} type(s), ${data.units.length} unité(s)`;
+    if (mode === 'replace') {
+      if (!confirm(`Remplacer tout le stock actuel par :\n${counts} ?\n\nLes assignations vers du matériel disparu seront retirées.`)) return;
+      importStockReplace(data);
+    } else {
+      if (!confirm(`Fusionner et ajouter au stock :\n${counts} ?\n\nLes doublons (même nom) seront ignorés.`)) return;
+      importStockMerge(data);
+    }
+    saveState();
+    renderAll();
+    alert('Import terminé.');
+  };
+  reader.readAsText(file);
+}
+
+let importMode = 'replace';
+document.getElementById('btn-export-stock').addEventListener('click', exportStock);
+document.getElementById('btn-import-replace').addEventListener('click', () => { importMode = 'replace'; const el = document.getElementById('input-import-stock'); el.value = ''; el.click(); });
+document.getElementById('btn-import-merge').addEventListener('click', () => { importMode = 'merge'; const el = document.getElementById('input-import-stock'); el.value = ''; el.click(); });
+document.getElementById('input-import-stock').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0];
+  if (f) handleImportFile(f, importMode);
 });
 
 // ── Init ────────────────────────────────────────────────────────────────────

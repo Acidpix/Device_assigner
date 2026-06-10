@@ -166,6 +166,10 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .legend-dot.vert  { border-color: #00b894; }
 .legend-dot.rouge { border-color: #e05c5c; }
 
+/* ── Import / Export ── */
+.admin-hint { font-size: .82rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+.io-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
 /* ── Mode Configuration ── */
 #btn-config-mode.toggle-on { background: var(--accent); color: #fff; border-color: var(--accent); }
 #config-mode-list { display: none; }
@@ -191,8 +195,12 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .config-check { width: 48px; height: 48px; flex-shrink: 0; border-radius: 10px; border: 2px solid var(--border); background: var(--surface2); color: var(--text-muted); font-size: 1.6rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s, color .15s; }
 .config-check:active { transform: scale(.95); }
 .config-check.checked { background: rgba(0,184,148,.18); border-color: var(--success); color: var(--success); }
-.config-unit-name { flex: 1; min-width: 0; font-weight: 500; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.config-unit-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.config-unit-name { font-weight: 500; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .config-unit-row.done .config-unit-name { color: var(--text-muted); }
+.config-unit-location { width: 100%; max-width: 280px; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 9px; border-radius: 6px; font-size: .82rem; font-family: inherit; transition: border-color .15s, box-shadow .15s; }
+.config-unit-location::placeholder { color: var(--text-muted); }
+.config-unit-location:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,92,252,.18); }
 .config-unit-point-btn { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: rgba(124,92,252,.12); color: var(--accent); border: 1px solid rgba(124,92,252,.4); padding: 9px 14px; border-radius: 9px; font-size: .98rem; font-weight: 700; cursor: pointer; transition: background .15s, border-color .15s; white-space: nowrap; }
 .config-unit-point-btn:hover { background: rgba(124,92,252,.24); border-color: var(--accent); }
 .config-unit-point-btn:active { transform: scale(.97); }
