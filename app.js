@@ -655,8 +655,8 @@ function renderBagChecker() {
         }
       });
 
-      checkCol.appendChild(placedBtn);
       checkCol.appendChild(btn);
+      checkCol.appendChild(placedBtn);
       li.appendChild(info);
       li.appendChild(checkCol);
       itemsList.appendChild(li);
