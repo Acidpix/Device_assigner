@@ -18,7 +18,7 @@
     /* Logo en filigrane */
     body::before {
       content: ''; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: min(62vw, 62vh); height: min(62vw, 62vh);
+      width: min(248vw, 248vh); height: min(248vw, 248vh);
       background: url('https://www.solidays.org/wp-content/uploads/2023/11/s24_logo2l_sansdate.png') no-repeat center / contain;
       opacity: .06; pointer-events: none; z-index: 0;
     }
@@ -37,20 +37,26 @@
     @media (min-width: 600px) { .samy-grid { grid-template-columns: repeat(3, 1fr); } }
 
     .samy-card {
-      border: 1px solid var(--border); border-radius: 9px; padding: 11px 10px;
-      text-align: center; cursor: pointer; user-select: none; transition: transform .1s, box-shadow .15s;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-      min-height: 58px; word-break: break-word;
+      border: 1px solid var(--border); border-radius: 9px; padding: 11px 13px;
+      cursor: pointer; user-select: none; transition: transform .1s, box-shadow .15s;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      min-height: 58px;
     }
     .samy-card:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,0,0,.35); }
+    .samy-card-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; word-break: break-word; }
     .samy-card-name { font-weight: 600; font-size: .9rem; line-height: 1.25; }
     /* Reste : contour bleu */
     .samy-card.grey   { background: rgba(34,38,58,.7); color: var(--text); border-color: #00b8ff; }
     /* Posé : aplat + contour vert (comme la page Points) */
     .samy-card.green  { background: rgba(31,107,87,.82); color: #fff; border-color: var(--success); }
-    /* Partiel : contour ambré + lueur intérieure ambrée */
-    .samy-card.orange { background: rgba(34,38,58,.55); color: var(--text); border-color: #f9a825; box-shadow: inset 0 0 16px rgba(249,168,37,.45); }
+    /* Partiel : contour ambré */
+    .samy-card.orange { background: rgba(34,38,58,.55); color: var(--text); border-color: #f9a825; }
     .samy-card-sub { font-size: .72rem; opacity: .8; }
+
+    /* Cartes caméra : emplacement (gros) > point > nom (petit) */
+    .samy-cam-loc { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
+    .samy-cam-point { font-size: .85rem; opacity: .9; }
+    .samy-cam-name { font-size: .7rem; opacity: .6; }
 
     /* Badge d'état (exactement comme sur la page Points) */
     .samy-badge { display: inline-flex; align-items: center; gap: 4px; font-size: .68rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
@@ -190,17 +196,28 @@
         const card = document.createElement('div');
         card.className = 'samy-card ' + (placed ? 'green' : 'grey');
 
-        const name = document.createElement('span');
-        name.className = 'samy-card-name';
-        name.textContent = u.name;
-        card.appendChild(name);
+        const main = document.createElement('div');
+        main.className = 'samy-card-main';
 
-        if (point) {
-          const sub = document.createElement('span');
-          sub.className = 'samy-card-sub';
-          sub.textContent = point.name;
-          card.appendChild(sub);
-        }
+        // 1) Emplacement (le plus important, gros)
+        const loc = document.createElement('span');
+        loc.className = 'samy-cam-loc';
+        loc.textContent = (a && a.location) ? a.location : '—';
+        main.appendChild(loc);
+
+        // 2) Point auquel la caméra est assignée
+        const pt = document.createElement('span');
+        pt.className = 'samy-cam-point';
+        pt.textContent = point ? point.name : 'Non assignée';
+        main.appendChild(pt);
+
+        // 3) Nom de la caméra (le moins important, petit)
+        const name = document.createElement('span');
+        name.className = 'samy-cam-name';
+        name.textContent = u.name;
+        main.appendChild(name);
+
+        card.appendChild(main);
 
         const badge = document.createElement('span');
         badge.className = 'samy-badge ' + (placed ? 'full' : 'none');
@@ -240,10 +257,13 @@
         const card = document.createElement('div');
         card.className = 'samy-card ' + st;
 
+        const main = document.createElement('div');
+        main.className = 'samy-card-main';
         const name = document.createElement('span');
         name.className = 'samy-card-name';
         name.textContent = p.name;
-        card.appendChild(name);
+        main.appendChild(name);
+        card.appendChild(main);
 
         if (st === 'green' || st === 'orange') {
           const badge = document.createElement('span');
