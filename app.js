@@ -393,10 +393,8 @@ function applyConfigMode() {
   if (configMode) renderConfigMode();
 }
 
-// Ouvre la fiche d'un point depuis la vue « Par type » (repasse en vue normale)
+// Ouvre la fiche d'un point depuis la vue « Par type » sans quitter ce mode
 function openPointFromConfig(pointId) {
-  configMode = false;
-  applyConfigMode();
   openPointDetail(pointId);
 }
 
@@ -1158,6 +1156,7 @@ function closePointDetail() {
   document.getElementById('overlay').classList.add('hidden');
   updatePointCardColor();
   activePointId = null;
+  if (configMode) renderConfigMode();   // reflète les modifs faites dans le modal
 }
 
 function setDetailMode(mode) {
