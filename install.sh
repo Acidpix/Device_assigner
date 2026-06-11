@@ -36,6 +36,7 @@ mkdir -p "${WEB_ROOT}"
 cp "${SCRIPT_DIR}/index.html" "${WEB_ROOT}/"
 cp "${SCRIPT_DIR}/style.css"  "${WEB_ROOT}/"
 cp "${SCRIPT_DIR}/app.js"     "${WEB_ROOT}/"
+cp "${SCRIPT_DIR}/samy.html"  "${WEB_ROOT}/"
 chown -R www-data:www-data "${WEB_ROOT}"
 chmod -R 755 "${WEB_ROOT}"
 
@@ -105,6 +106,11 @@ server {
         proxy_http_version 1.1;
         proxy_set_header   Host \$host;
         proxy_read_timeout 10s;
+    }
+
+    # Page publique lecture seule
+    location = /samy {
+        try_files /samy.html =404;
     }
 
     # Cache fichiers statiques

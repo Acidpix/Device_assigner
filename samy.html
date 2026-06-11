@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solidays — Répartition Matériel</title>
+  <style>
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3350;
+      --accent: #7c5cfc; --success: #00b894; --danger: #e05c5c;
+      --text: #e8eaf2; --text-muted: #7b82a8;
+      --green: #1f8a6e; --orange: #c9802f; --grey: #1a1d27;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .hidden { display: none !important; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* En-tête : logo — titre — logo */
+    .samy-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 24px; }
+    .samy-header-inner { display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap; max-width: 1100px; margin: 0 auto; }
+    .samy-logo { height: 72px; width: auto; object-fit: contain; }
+    .samy-title { font-size: 1.7rem; font-weight: 700; letter-spacing: .01em; text-align: center; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+
+    /* Grille de points : jusqu'à 3 colonnes, petites cartes */
+    .samy-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    @media (min-width: 600px) { .samy-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .samy-card {
+      border: 1px solid var(--border); border-radius: 9px; padding: 12px 10px;
+      text-align: center; cursor: pointer; font-weight: 600; font-size: .92rem;
+      line-height: 1.25; user-select: none; transition: transform .1s, box-shadow .15s;
+      display: flex; align-items: center; justify-content: center; min-height: 58px; word-break: break-word;
+    }
+    .samy-card:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,0,0,.35); }
+    .samy-card.grey   { background: var(--grey); color: var(--text); }
+    .samy-card.orange { background: var(--orange); color: #fff; }
+    .samy-card.green  { background: var(--green); color: #fff; }
+
+    .samy-empty { text-align: center; color: var(--text-muted); padding: 48px 16px; }
+
+    /* Légende */
+    .samy-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center; margin-bottom: 20px; color: var(--text-muted); font-size: .82rem; }
+    .samy-legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .samy-legend i { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
+
+    /* Modal lecture seule */
+    .samy-modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+    .samy-modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 560px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 4px 24px rgba(0,0,0,.45); }
+    .samy-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
+    .samy-modal-head h2 { font-size: 1.2rem; font-weight: 700; }
+    .samy-modal-sub { font-size: .85rem; color: var(--text-muted); margin-top: 3px; }
+    .samy-close { background: none; border: none; color: var(--text-muted); font-size: 1.7rem; line-height: 1; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+    .samy-close:hover { color: var(--text); }
+    .samy-modal-body { padding: 16px 20px 22px; overflow-y: auto; }
+    .samy-comment { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 10px 12px; font-size: .9rem; white-space: pre-wrap; margin-bottom: 16px; }
+
+    .samy-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .samy-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; display: flex; flex-direction: column; gap: 6px; }
+    .samy-row-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .samy-row-name { font-weight: 600; font-size: .88rem; }
+    .samy-row-meta { font-size: .75rem; color: var(--text-muted); }
+    .samy-row-cat { font-size: .64rem; padding: 2px 6px; border-radius: 10px; color: #fff; white-space: nowrap; }
+    .samy-row-loc { font-size: .8rem; color: var(--accent); font-weight: 600; }
+    .samy-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .samy-pill { font-size: .68rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); }
+    .samy-pill.on { background: rgba(0,184,148,.16); border-color: var(--success); color: var(--success); }
+    .samy-modal-empty { color: var(--text-muted); font-size: .88rem; padding: 6px 0; }
+  </style>
+</head>
+<body>
+  <header class="samy-header">
+    <div class="samy-header-inner">
+      <img class="samy-logo" src="https://www.solidays.org/wp-content/uploads/2023/11/s24_logo2l_sansdate.png" alt="Solidays" />
+      <span class="samy-title">Répartition Matériel</span>
+      <img class="samy-logo" src="https://www.solidays.org/wp-content/uploads/2023/11/s24_logo2l_sansdate.png" alt="Solidays" />
+    </div>
+  </header>
+
+  <main>
+    <div class="samy-legend">
+      <span><i style="background:var(--green)"></i>Posé</span>
+      <span><i style="background:var(--orange)"></i>Partiellement posé</span>
+      <span><i style="background:var(--grey);border:1px solid var(--border)"></i>Reste</span>
+    </div>
+    <div id="samy-grid" class="samy-grid"></div>
+  </main>
+
+  <div id="samy-modal" class="samy-modal hidden">
+    <div class="samy-modal-box">
+      <div class="samy-modal-head">
+        <div>
+          <h2 id="samy-modal-name"></h2>
+          <div id="samy-modal-sub" class="samy-modal-sub"></div>
+        </div>
+        <button class="samy-close" id="samy-close">&times;</button>
+      </div>
+      <div class="samy-modal-body">
+        <div id="samy-modal-comment" class="samy-comment hidden"></div>
+        <ul id="samy-modal-list" class="samy-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let state = null;
+    let openPointId = null;
+
+    const $ = id => document.getElementById(id);
+    const getCat   = id => (state.categories || []).find(c => c.id === id);
+    const getItem  = id => (state.items || []).find(i => i.id === id);
+    const getUnit  = id => (state.units || []).find(u => u.id === id);
+    const getPoint = id => (state.points || []).find(p => p.id === id);
+
+    function placement(pointId) {
+      const as = (state.assignments || []).filter(a => a.pointId === pointId);
+      if (!as.length) return 'grey';
+      const placed = as.filter(a => a.placed).length;
+      if (placed === 0) return 'grey';
+      if (placed === as.length) return 'green';
+      return 'orange';
+    }
+
+    function renderGrid() {
+      const grid = $('samy-grid');
+      grid.innerHTML = '';
+      const points = (state && state.points) || [];
+      if (!points.length) {
+        grid.innerHTML = '<div class="samy-empty">Aucun point de distribution.</div>';
+        return;
+      }
+      points.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'samy-card ' + placement(p.id);
+        card.textContent = p.name;
+        card.addEventListener('click', () => openModal(p.id));
+        grid.appendChild(card);
+      });
+    }
+
+    function openModal(pointId) {
+      openPointId = pointId;
+      renderModal();
+      $('samy-modal').classList.remove('hidden');
+    }
+    function closeModal() {
+      $('samy-modal').classList.add('hidden');
+      openPointId = null;
+    }
+
+    function renderModal() {
+      const point = getPoint(openPointId);
+      if (!point) { closeModal(); return; }
+
+      $('samy-modal-name').textContent = point.name;
+      $('samy-modal-sub').textContent = point.desc || '';
+      $('samy-modal-sub').style.display = point.desc ? '' : 'none';
+
+      const commentEl = $('samy-modal-comment');
+      if (point.comment) { commentEl.textContent = point.comment; commentEl.classList.remove('hidden'); }
+      else { commentEl.textContent = ''; commentEl.classList.add('hidden'); }
+
+      const list = $('samy-modal-list');
+      list.innerHTML = '';
+      const assigned = (state.assignments || []).filter(a => a.pointId === openPointId);
+
+      if (!assigned.length) {
+        const li = document.createElement('li');
+        li.className = 'samy-modal-empty';
+        li.textContent = 'Aucun matériel assigné à ce point.';
+        list.appendChild(li);
+        return;
+      }
+
+      assigned.forEach(a => {
+        const unit = getUnit(a.unitId);
+        if (!unit) return;
+        const item = getItem(unit.itemId);
+        const cat  = item ? getCat(item.catId) : null;
+
+        const li = document.createElement('li');
+        li.className = 'samy-row';
+
+        const head = document.createElement('div');
+        head.className = 'samy-row-head';
+        head.innerHTML =
+          `<span class="samy-row-name">${unit.name}</span>` +
+          (item ? `<span class="samy-row-meta">${item.name}</span>` : '') +
+          (cat ? `<span class="samy-row-cat" style="background:${cat.color}">${cat.name}</span>` : '');
+        li.appendChild(head);
+
+        if (a.location) {
+          const loc = document.createElement('div');
+          loc.className = 'samy-row-loc';
+          loc.textContent = a.location;
+          li.appendChild(loc);
+        }
+
+        const pills = document.createElement('div');
+        pills.className = 'samy-pills';
+        pills.innerHTML =
+          `<span class="samy-pill ${a.configured ? 'on' : ''}">Config</span>` +
+          `<span class="samy-pill ${a.inBag ? 'on' : ''}">Sac</span>` +
+          `<span class="samy-pill ${a.placed ? 'on' : ''}">Posé</span>`;
+        li.appendChild(pills);
+
+        list.appendChild(li);
+      });
+    }
+
+    function render() {
+      renderGrid();
+      if (openPointId) renderModal();
+    }
+
+    $('samy-close').addEventListener('click', closeModal);
+    $('samy-modal').addEventListener('click', e => { if (e.target === $('samy-modal')) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    async function load() {
+      try {
+        const res = await fetch('/api/state');
+        if (res.ok) state = await res.json();
+      } catch (_) {}
+      if (!state) state = { categories: [], items: [], units: [], points: [], assignments: [] };
+      render();
+    }
+
+    // Temps réel : le serveur pousse l'état à chaque changement (lecture seule)
+    function connectStream() {
+      if (typeof EventSource === 'undefined') { setInterval(load, 5000); return; }
+      const es = new EventSource('/api/events');
+      es.onmessage = e => { try { state = JSON.parse(e.data); render(); } catch (_) {} };
+    }
+
+    load();
+    connectStream();
+  </script>
+</body>
+</html>
