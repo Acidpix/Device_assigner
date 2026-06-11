@@ -221,13 +221,6 @@ function renderReserve() {
 
 // ── Render: Points ─────────────────────────────────────────────────────────
 
-function togglePointsView() {
-  if (!state.pointsViewMode) state.pointsViewMode = 'cards';
-  state.pointsViewMode = state.pointsViewMode === 'cards' ? 'list' : 'cards';
-  saveState();
-  renderPoints();
-}
-
 function makePointCard(point) {
   const assignedUnitIds = state.assignments
     .filter(a => a.pointId === point.id)
@@ -373,8 +366,7 @@ function renderPoints() {
     return;
   }
 
-  const viewMode = state.pointsViewMode || 'cards';
-  grid.className = viewMode === 'list' ? 'points-list' : '';
+  grid.className = 'points-list';
 
   state.points.forEach(point => {
     const card = makePointCard(point);
@@ -1231,9 +1223,26 @@ function renderDetailAssignedList() {
     const li = document.createElement('li');
     li.className = 'assigned-row';
 
-    // Colonne gauche : deux boutons toggle empilés
+    // Ligne 1 : nom + type + catégorie + bouton retirer
+    const head = document.createElement('div');
+    head.className = 'ar-head';
+    head.innerHTML = `
+      <span class="ar-name">${unit.name}</span>
+      ${item ? `<span class="ar-meta">${item.name}</span>` : ''}
+      ${cat ? `<span class="ar-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
+    `;
+    const retBtn = document.createElement('button');
+    retBtn.className = 'ar-remove';
+    retBtn.title = 'Retirer du point';
+    retBtn.textContent = '×';
+    head.appendChild(retBtn);
+
+    // Ligne 2 : bascules Config / Sac / Posé (horizontales) + emplacement
+    const controls = document.createElement('div');
+    controls.className = 'ar-controls';
+
     const checks = document.createElement('div');
-    checks.className = 'assigned-row-checks';
+    checks.className = 'ar-checks';
 
     const lblConfig = document.createElement('label');
     lblConfig.className = 'check-toggle' + (a.configured ? ' checked' : '');
@@ -1254,38 +1263,22 @@ function renderDetailAssignedList() {
     checks.appendChild(lblBag);
     checks.appendChild(lblPlaced);
 
-    // Zone centrale : nom + type + catégorie + emplacement
-    const infoDiv = document.createElement('div');
-    infoDiv.className = 'assigned-row-info';
-    infoDiv.innerHTML = `
-      <span class="assigned-row-name">${unit.name}</span>
-      ${item ? `<span class="assigned-row-meta">${item.name}</span>` : ''}
-      ${cat ? `<span class="assigned-row-cat" style="background:${cat.color}">${cat.name}</span>` : ''}
-    `;
-
     // Champ Location éditable (où se situe l'équipement sur le point)
     const locInput = document.createElement('input');
     locInput.type = 'text';
-    locInput.className = 'assigned-row-location';
-    locInput.placeholder = '📍 Emplacement sur le point…';
+    locInput.className = 'ar-location';
+    locInput.placeholder = 'Emplacement sur le point…';
     locInput.value = a.location || '';
     locInput.addEventListener('input', () => {
       const idx = state.assignments.findIndex(x => x.pointId === activePointId && x.unitId === unit.id);
       if (idx !== -1) { state.assignments[idx].location = locInput.value; saveState(); }
     });
-    infoDiv.appendChild(locInput);
 
-    // Bouton retirer
-    const actionsDiv = document.createElement('div');
-    actionsDiv.className = 'assigned-row-actions';
-    const retBtn = document.createElement('button');
-    retBtn.className = 'btn-danger btn-return';
-    retBtn.textContent = 'Retirer';
-    actionsDiv.appendChild(retBtn);
+    controls.appendChild(checks);
+    controls.appendChild(locInput);
 
-    li.appendChild(checks);
-    li.appendChild(infoDiv);
-    li.appendChild(actionsDiv);
+    li.appendChild(head);
+    li.appendChild(controls);
 
     const chkConfigured = li.querySelector('.check-configured');
     const chkInBag = li.querySelector('.check-in-bag');
@@ -1367,14 +1360,7 @@ function renderAll() {
   populateBagCheckerSelect();
   renderBagChecker();
   renderAdmin();
-  updatePointsViewButton();
   if (configMode) renderConfigMode();   // garde la vue config à jour après une synchro
-}
-
-function updatePointsViewButton() {
-  const btn = document.getElementById('btn-toggle-points-view');
-  const mode = state.pointsViewMode || 'cards';
-  btn.textContent = mode === 'cards' ? '≣ Liste' : '⊞ Cartes';
 }
 
 // ── Events ─────────────────────────────────────────────────────────────────
@@ -1455,8 +1441,6 @@ document.getElementById('form-add-item').addEventListener('submit', e => {
   renderAll();
 });
 
-// Basculer vue points
-document.getElementById('btn-toggle-points-view').addEventListener('click', togglePointsView);
 document.getElementById('btn-config-mode').addEventListener('click', toggleConfigMode);
 
 // Ajouter point
