@@ -13,7 +13,16 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     .hidden { display: none !important; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; position: relative; overflow-x: hidden; }
+
+    /* Logo en filigrane */
+    body::before {
+      content: ''; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: min(62vw, 62vh); height: min(62vw, 62vh);
+      background: url('https://www.solidays.org/wp-content/uploads/2023/11/s24_logo2l_sansdate.png') no-repeat center / contain;
+      opacity: .06; pointer-events: none; z-index: 0;
+    }
+    .samy-header, main { position: relative; z-index: 1; }
 
     /* En-tête : logo — titre — logo */
     .samy-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 18px 24px; }
@@ -28,22 +37,28 @@
     @media (min-width: 600px) { .samy-grid { grid-template-columns: repeat(3, 1fr); } }
 
     .samy-card {
-      border: 1px solid var(--border); border-radius: 9px; padding: 12px 10px;
-      text-align: center; cursor: pointer; font-weight: 600; font-size: .92rem;
-      line-height: 1.25; user-select: none; transition: transform .1s, box-shadow .15s;
-      display: flex; align-items: center; justify-content: center; min-height: 58px; word-break: break-word;
+      border: 1px solid var(--border); border-radius: 9px; padding: 11px 10px;
+      text-align: center; cursor: pointer; user-select: none; transition: transform .1s, box-shadow .15s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+      min-height: 58px; word-break: break-word;
     }
     .samy-card:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,0,0,.35); }
-    .samy-card.grey   { background: var(--grey); color: var(--text); }
-    .samy-card.orange { background: var(--orange); color: #fff; }
-    .samy-card.green  { background: var(--green); color: #fff; }
+    .samy-card-name { font-weight: 600; font-size: .9rem; line-height: 1.25; }
+    .samy-card.grey   { background: rgba(34,38,58,.7);  color: var(--text); }
+    .samy-card.orange { background: rgba(201,128,47,.78); color: #fff; }
+    .samy-card.green  { background: rgba(31,138,110,.78); color: #fff; }
+
+    /* Badge d'état (comme sur la page Points) */
+    .samy-badge { display: inline-flex; align-items: center; gap: 4px; font-size: .68rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+    .samy-badge.full    { background: rgba(0,184,148,.22);  color: #d6fff3; border: 1px solid rgba(255,255,255,.35); }
+    .samy-badge.partial { background: rgba(249,168,37,.22); color: #fff3dc; border: 1px solid rgba(255,255,255,.35); }
 
     .samy-empty { text-align: center; color: var(--text-muted); padding: 48px 16px; }
 
-    /* Légende */
-    .samy-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center; margin-bottom: 20px; color: var(--text-muted); font-size: .82rem; }
-    .samy-legend span { display: inline-flex; align-items: center; gap: 7px; }
-    .samy-legend i { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
+    /* Tri */
+    .samy-controls { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+    .samy-controls label { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--text-muted); }
+    .samy-controls select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 7px; font-size: .85rem; cursor: pointer; }
 
     /* Modal lecture seule */
     .samy-modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
@@ -73,16 +88,19 @@
   <header class="samy-header">
     <div class="samy-header-inner">
       <img class="samy-logo" src="https://www.solidays.org/wp-content/uploads/2023/11/s24_logo2l_sansdate.png" alt="Solidays" />
-      <span class="samy-title">Répartition Matériel</span>
+      <span class="samy-title">Déploiement Wifi</span>
       <img class="samy-logo" src="https://www.solidays.org/wp-content/uploads/2023/11/s24_logo2l_sansdate.png" alt="Solidays" />
     </div>
   </header>
 
   <main>
-    <div class="samy-legend">
-      <span><i style="background:var(--green)"></i>Posé</span>
-      <span><i style="background:var(--orange)"></i>Partiellement posé</span>
-      <span><i style="background:var(--grey);border:1px solid var(--border)"></i>Reste</span>
+    <div class="samy-controls">
+      <label>Trier
+        <select id="samy-sort">
+          <option value="num">Par numéro de point</option>
+          <option value="state">Par état</option>
+        </select>
+      </label>
     </div>
     <div id="samy-grid" class="samy-grid"></div>
   </main>
@@ -122,18 +140,45 @@
       return 'orange';
     }
 
+    let sortMode = 'num';
+    const STATE_RANK = { grey: 0, orange: 1, green: 2 };   // non terminés en premier
+    const BADGE = { full: 'Posé', partial: 'Partiellement posé' };
+
     function renderGrid() {
       const grid = $('samy-grid');
       grid.innerHTML = '';
-      const points = (state && state.points) || [];
+      const points = ((state && state.points) || []).slice();
       if (!points.length) {
         grid.innerHTML = '<div class="samy-empty">Aucun point de distribution.</div>';
         return;
       }
+
+      if (sortMode === 'state') {
+        points.sort((a, b) =>
+          STATE_RANK[placement(a.id)] - STATE_RANK[placement(b.id)] ||
+          a.name.localeCompare(b.name, 'fr', { numeric: true }));
+      } else {
+        points.sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }));
+      }
+
       points.forEach(p => {
+        const st = placement(p.id);                       // grey | orange | green
         const card = document.createElement('div');
-        card.className = 'samy-card ' + placement(p.id);
-        card.textContent = p.name;
+        card.className = 'samy-card ' + st;
+
+        const name = document.createElement('span');
+        name.className = 'samy-card-name';
+        name.textContent = p.name;
+        card.appendChild(name);
+
+        if (st === 'green' || st === 'orange') {
+          const badge = document.createElement('span');
+          const kind = st === 'green' ? 'full' : 'partial';
+          badge.className = 'samy-badge ' + kind;
+          badge.textContent = (kind === 'full' ? '✓ ' : '◐ ') + BADGE[kind];
+          card.appendChild(badge);
+        }
+
         card.addEventListener('click', () => openModal(p.id));
         grid.appendChild(card);
       });
@@ -214,6 +259,7 @@
       if (openPointId) renderModal();
     }
 
+    $('samy-sort').addEventListener('change', e => { sortMode = e.target.value; renderGrid(); });
     $('samy-close').addEventListener('click', closeModal);
     $('samy-modal').addEventListener('click', e => { if (e.target === $('samy-modal')) closeModal(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
