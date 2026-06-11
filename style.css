@@ -122,13 +122,10 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .point-place-badge.partial { background: rgba(249,168,37,.15); color: #f9a825; border: 1px solid rgba(249,168,37,.4); }
 .point-place-badge.full { background: rgba(0,184,148,.18); color: var(--success); border: 1px solid rgba(0,184,148,.45); }
 
-/* Fond vert solide quand tout le matériel est posé */
-.point-card.placed-full { background: var(--success); border-color: var(--success); }
-.point-card.placed-full:hover { box-shadow: 0 0 0 3px rgba(0,184,148,.35); border-color: var(--success); }
-.point-card.placed-full .point-card-name,
-.point-card.placed-full .point-card-desc,
-.point-card.placed-full .point-empty { color: #06281f; }
-.point-card.placed-full .point-place-badge.full { background: #06281f; color: #fff; border-color: #06281f; }
+/* Fond vert (plein mais adouci) quand tout le matériel est posé */
+.point-card.placed-full { background: rgba(31,107,87,.82); border-color: var(--success); }
+.point-card.placed-full:hover { box-shadow: 0 0 0 3px rgba(0,184,148,.3); border-color: var(--success); }
+.point-card.placed-full .point-place-badge.full { background: var(--success); color: #06281f; border-color: var(--success); }
 .point-click-hint { font-size: .72rem; color: var(--text-muted); opacity: 0; transition: opacity .15s; }
 .point-card:hover .point-click-hint { opacity: 1; }
 .point-card-desc { font-size: .82rem; color: var(--text-muted); margin-bottom: 10px; }
