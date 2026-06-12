@@ -179,9 +179,9 @@
     function renderCameras() {
       const grid = $('samy-grid');
       grid.innerHTML = '';
-      const cams = cameraUnits();
+      const cams = cameraUnits().filter(u => unitAssign(u.id));   // uniquement les caméras assignées
       if (!cams.length) {
-        grid.innerHTML = '<div class="samy-empty">Aucune caméra.</div>';
+        grid.innerHTML = '<div class="samy-empty">Aucune caméra assignée.</div>';
         return;
       }
       if (sortMode === 'state') {
