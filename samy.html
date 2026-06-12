@@ -35,15 +35,16 @@
     /* Grille de points : jusqu'à 3 colonnes, petites cartes */
     .samy-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     @media (min-width: 600px) { .samy-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 460px) { .samy-grid { grid-template-columns: 1fr; } }
 
     .samy-card {
       border: 1px solid var(--border); border-radius: 9px; padding: 11px 13px;
       cursor: pointer; user-select: none; transition: transform .1s, box-shadow .15s;
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px 10px; flex-wrap: wrap;
       min-height: 58px;
     }
     .samy-card:hover { transform: translateY(-1px); box-shadow: 0 3px 12px rgba(0,0,0,.35); }
-    .samy-card-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; word-break: break-word; }
+    .samy-card-main { flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
     .samy-card-name { font-weight: 600; font-size: .9rem; line-height: 1.25; }
     /* Reste : contour bleu */
     .samy-card.grey   { background: rgba(34,38,58,.7); color: var(--text); border-color: #00b8ff; }
