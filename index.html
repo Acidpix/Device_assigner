@@ -6,7 +6,19 @@
   <title>Solidays — Répartition Matériel</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="preboot">
+  <!-- ── Écran de connexion (affiché tant que la session n'est pas validée) ── -->
+  <div id="login-screen" class="login-screen hidden">
+    <form id="login-form" class="login-box" autocomplete="off">
+      <img src="https://www.solidays.org/wp-content/uploads/2023/11/s24_logo2l_sansdate.png" alt="Solidays" class="login-logo" />
+      <h1 class="login-title">Répartition Matériel</h1>
+      <p class="login-sub">Accès réservé — veuillez vous connecter.</p>
+      <input type="password" id="login-password" class="login-input" placeholder="Mot de passe" autocomplete="current-password" required />
+      <button type="submit" class="login-btn">Se connecter</button>
+      <div id="login-error" class="login-error hidden"></div>
+    </form>
+  </div>
+
   <header>
     <div class="header-inner">
       <div class="header-brand">
@@ -19,6 +31,7 @@
         <button class="nav-btn" data-tab="bag-checker">Bag Checker</button>
         <button class="nav-btn" data-tab="admin">Administration</button>
         <a class="nav-btn nav-link" href="https://github.com/Acidpix/Device_assigner/blob/master/GUIDE.md" target="_blank" rel="noopener" title="Ouvrir le guide utilisateur (GitHub)">? Guide</a>
+        <button class="nav-btn nav-logout hidden" id="btn-logout" title="Se déconnecter">⎋ Déconnexion</button>
       </nav>
     </div>
   </header>

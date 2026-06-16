@@ -58,6 +58,7 @@ function flushSave(useBeacon) {
     headers: { 'Content-Type': 'application/json' },
     body,
   })
+    .then(res => { if (res.status === 401) handleSessionExpired(); })
     .catch(() => {})
     .finally(() => { savePending = false; });
 }
@@ -1637,8 +1638,85 @@ document.getElementById('input-import-stock').addEventListener('change', e => {
   if (f) handleImportFile(f, importMode);
 });
 
+// ── Authentification (mot de passe partagé) ─────────────────────────────────
+// L'app ne démarre qu'une fois la session validée par le serveur. La page
+// publique /samy n'est pas concernée (elle reste en lecture seule, sans login).
+
+let booted = false;
+
+function showLogin(message) {
+  const screen = document.getElementById('login-screen');
+  const err    = document.getElementById('login-error');
+  if (message) { err.textContent = message; err.classList.remove('hidden'); }
+  else err.classList.add('hidden');
+  screen.classList.remove('hidden');
+  setTimeout(() => document.getElementById('login-password').focus(), 50);
+}
+
+// Connexion réussie : on masque l'écran de login et on démarre l'app (une fois).
+function onLoginSuccess() {
+  document.getElementById('login-screen').classList.add('hidden');
+  if (!booted) bootApp();
+}
+
+// Session expirée pendant l'utilisation (écriture refusée) → on redemande le mot de passe.
+function handleSessionExpired() {
+  const screen = document.getElementById('login-screen');
+  if (!screen.classList.contains('hidden')) return;   // déjà affiché
+  showLogin('Session expirée. Reconnecte-toi pour enregistrer tes modifications.');
+}
+
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const input = document.getElementById('login-password');
+  const err   = document.getElementById('login-error');
+  err.classList.add('hidden');
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: input.value }),
+    });
+    if (res.ok) {
+      input.value = '';
+      onLoginSuccess();
+    } else {
+      err.textContent = 'Mot de passe incorrect.';
+      err.classList.remove('hidden');
+      input.select();
+    }
+  } catch (_) {
+    err.textContent = 'Erreur réseau. Réessaie.';
+    err.classList.remove('hidden');
+  }
+});
+
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  try { await fetch('/api/logout', { method: 'POST' }); } catch (_) {}
+  location.reload();
+});
+
+// Point d'entrée : décide s'il faut afficher le login ou démarrer directement.
+(async function gate() {
+  let session = { required: false, authed: true };
+  try {
+    const res = await fetch('/api/session');
+    if (res.ok) session = await res.json();
+  } catch (_) { /* serveur injoignable : on laisse démarrer, l'app gérera l'absence de données */ }
+
+  // Bouton « Déconnexion » visible seulement si un mot de passe est exigé.
+  document.getElementById('btn-logout').classList.toggle('hidden', !session.required);
+
+  if (session.required && !session.authed) showLogin();
+  else onLoginSuccess();
+})();
+
 // ── Init ────────────────────────────────────────────────────────────────────
-(async () => {
+async function bootApp() {
+  if (booted) return;
+  booted = true;
+  document.body.classList.remove('preboot');
+
   state = await loadState();
 
   if (!state.categories.length) {
@@ -1697,4 +1775,4 @@ document.getElementById('input-import-stock').addEventListener('change', e => {
     else syncFromServer();
   });
   window.addEventListener('pagehide', () => flushSave(true));   // fermeture/navigation
-})();
+}

@@ -522,3 +522,57 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 }
 
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* ── Écran de connexion ──────────────────────────────────────────────────── */
+/* Tant que la session n'est pas tranchée, on masque l'app pour éviter tout
+   flash de contenu derrière l'écran de login. */
+body.preboot header,
+body.preboot main { visibility: hidden; }
+
+.login-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(124, 92, 252, .18), transparent 60%),
+    var(--bg);
+}
+
+.login-box {
+  width: 100%; max-width: 360px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .45);
+}
+
+.login-logo { height: 60px; width: auto; object-fit: contain; margin-bottom: 4px; }
+.login-title { font-size: 1.25rem; font-weight: 700; text-align: center; }
+.login-sub { font-size: .85rem; color: var(--text-muted); text-align: center; margin-top: -8px; }
+
+.login-input {
+  width: 100%;
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 10px; padding: 12px 14px; font-size: 1rem;
+}
+.login-input:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, .25);
+}
+
+.login-btn {
+  width: 100%;
+  background: var(--accent); color: #fff; border: none;
+  border-radius: 10px; padding: 12px 14px; font-size: 1rem; font-weight: 600;
+  cursor: pointer; transition: filter .15s;
+}
+.login-btn:hover { filter: brightness(1.08); }
+
+.login-error {
+  width: 100%; text-align: center;
+  color: var(--danger); font-size: .85rem; font-weight: 600;
+}
+
+.nav-logout { color: var(--danger); }

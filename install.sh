@@ -10,6 +10,11 @@ NGINX_CONF="/etc/nginx/sites-available/${APP_NAME}"
 SERVICE_FILE="/etc/systemd/system/${APP_NAME}.service"
 PORT_API=3001
 
+# Mot de passe d'accès à l'app principale (Points / Réserve / Bag Checker /
+# Administration). La page publique /samy reste accessible sans connexion.
+# Surcharge possible : APP_PASSWORD="monMotDePasse" sudo ./install.sh
+APP_PASSWORD="${APP_PASSWORD:-7pasEviden1}"
+
 if [[ $EUID -ne 0 ]]; then
   echo "Ce script doit être exécuté en root (ou via sudo)." >&2
   exit 1
@@ -65,6 +70,7 @@ Restart=on-failure
 RestartSec=5
 Environment=PORT=${PORT_API}
 Environment=DATA_FILE=${DATA_DIR}/data.json
+Environment=APP_PASSWORD=${APP_PASSWORD}
 
 [Install]
 WantedBy=multi-user.target
@@ -143,6 +149,8 @@ echo ""
 echo "══════════════════════════════════════════════"
 echo "  Installation terminée !"
 echo "  Application : http://${IP}"
+echo "  Mot de passe: ${APP_PASSWORD}  (modifiable via APP_PASSWORD)"
+echo "  Page publique : http://${IP}/samy  (sans connexion)"
 echo "  API         : http://${IP}/api/state"
 echo "  Données     : ${DATA_DIR}/data.json"
 echo "══════════════════════════════════════════════"

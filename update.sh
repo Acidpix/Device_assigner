@@ -31,7 +31,8 @@ echo "==> Déploiement des fichiers statiques..."
 cp "${REPO_DIR}/index.html" "${WEB_ROOT}/"
 cp "${REPO_DIR}/style.css"  "${WEB_ROOT}/"
 cp "${REPO_DIR}/app.js"     "${WEB_ROOT}/"
-chown www-data:www-data "${WEB_ROOT}"/{index.html,style.css,app.js}
+cp "${REPO_DIR}/samy.html"  "${WEB_ROOT}/"
+chown www-data:www-data "${WEB_ROOT}"/{index.html,style.css,app.js,samy.html}
 
 # ── API ────────────────────────────────────────────────────────────────────
 echo "==> Mise à jour de l'API..."

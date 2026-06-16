@@ -1,13 +1,90 @@
 const express = require('express');
 const fs      = require('fs');
 const path    = require('path');
+const crypto  = require('crypto');
 
 const app      = express();
 const PORT     = process.env.PORT      || 3001;
 const DATA     = process.env.DATA_FILE || path.join(__dirname, 'data.json');
 const API_KEY  = process.env.API_KEY   || null;
 
+// ── Authentification (mot de passe partagé) ──────────────────────────────────
+// Si APP_PASSWORD est défini → l'app principale exige une connexion et toute
+// écriture (POST /api/state) est refusée sans session valide. La page publique
+// /samy et les lectures (GET /api/state, /api/events) restent libres d'accès.
+// Sans APP_PASSWORD → comportement historique : tout est ouvert.
+const APP_PASSWORD   = process.env.APP_PASSWORD || null;
+const SESSION_COOKIE = 'da_session';
+const SESSION_TTL    = 7 * 24 * 3600 * 1000;   // 7 jours
+// Secret HMAC dérivé du mot de passe : le changer invalide les sessions émises.
+const SESSION_SECRET = APP_PASSWORD
+  ? crypto.createHash('sha256').update('da|' + APP_PASSWORD).digest()
+  : null;
+
+function makeSessionToken() {
+  const payload = Buffer.from(String(Date.now() + SESSION_TTL)).toString('base64url');
+  const sig     = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('base64url');
+  return `${payload}.${sig}`;
+}
+
+function verifySessionToken(token) {
+  if (!token || !SESSION_SECRET) return false;
+  const [payload, sig] = token.split('.');
+  if (!payload || !sig) return false;
+  const expected = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('base64url');
+  const a = Buffer.from(sig), b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false;   // signature falsifiée
+  const exp = parseInt(Buffer.from(payload, 'base64url').toString(), 10);
+  return Number.isFinite(exp) && Date.now() < exp;                            // non expirée
+}
+
+function parseCookies(req) {
+  const out = {};
+  (req.headers.cookie || '').split(';').forEach(part => {
+    const i = part.indexOf('=');
+    if (i > -1) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+  });
+  return out;
+}
+
+function isAuthed(req) {
+  if (!APP_PASSWORD) return true;   // login désactivé
+  return verifySessionToken(parseCookies(req)[SESSION_COOKIE]);
+}
+
+function requireAuth(req, res, next) {
+  if (isAuthed(req)) return next();
+  res.status(401).json({ error: 'Authentification requise.' });
+}
+
+function passwordMatches(input) {
+  const a = Buffer.from(String(input || '')), b = Buffer.from(APP_PASSWORD);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 app.use(express.json({ limit: '4mb' }));
+
+// ── Endpoints d'authentification ─────────────────────────────────────────────
+
+app.post('/api/login', (req, res) => {
+  if (!APP_PASSWORD) return res.json({ ok: true });                 // login désactivé
+  if (!passwordMatches(req.body && req.body.password)) {
+    return res.status(401).json({ error: 'Mot de passe incorrect.' });
+  }
+  res.cookie(SESSION_COOKIE, makeSessionToken(), {
+    httpOnly: true, sameSite: 'strict', path: '/', maxAge: SESSION_TTL,
+  });
+  res.json({ ok: true });
+});
+
+app.post('/api/logout', (_req, res) => {
+  res.clearCookie(SESSION_COOKIE, { path: '/' });
+  res.json({ ok: true });
+});
+
+app.get('/api/session', (req, res) => {
+  res.json({ required: !!APP_PASSWORD, authed: isAuthed(req) });
+});
 
 // ── Flux temps réel (Server-Sent Events) ─────────────────────────────────────
 const sseClients = new Set();
@@ -225,7 +302,7 @@ app.get('/api/events', (req, res) => {
   req.on('close', () => { clearInterval(ping); sseClients.delete(res); });
 });
 
-app.post('/api/state', (req, res) => {
+app.post('/api/state', requireAuth, (req, res) => {
   try {
     fs.mkdirSync(path.dirname(DATA), { recursive: true });
 
