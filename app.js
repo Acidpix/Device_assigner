@@ -129,6 +129,14 @@ function applyDeviceClass() {
 
 function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
 
+// Date de pose stockée au format ISO (YYYY-MM-DD, valeur native d'<input type="date">)
+// → affichée en français JJ/MM/AAAA.
+function formatPoseDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return (y && m && d) ? `${d}/${m}/${y}` : iso;
+}
+
 function getCat(id)   { return state.categories.find(c => c.id === id); }
 function getItem(id)  { return state.items.find(i => i.id === id); }
 function getPoint(id) { return state.points.find(p => p.id === id); }
@@ -277,6 +285,7 @@ function makePointCard(point) {
       <span class="point-click-hint">↗ détails</span>
     </div>
     ${point.desc ? `<div class="point-card-desc">${point.desc}</div>` : ''}
+    ${point.poseDate ? `<div class="point-card-pose">📅 Pose : ${formatPoseDate(point.poseDate)}</div>` : ''}
     <div class="point-summary">${summaryHtml}</div>
     <div class="point-tooltip">${tooltipHtml}</div>
   `;
@@ -540,17 +549,58 @@ function essentialApplies(ess, pointId) {
 
 // ── Render: Bag Checker ────────────────────────────────────────────────────
 
+// Points triés selon le mode choisi dans le Bag Checker :
+//  - 'name' : numéro de point (tri naturel sur le nom, « Point 2 » avant « Point 10 »)
+//  - 'pose' : date de pose croissante ; les points sans date passent à la fin.
+function sortedBagPoints() {
+  const mode = document.getElementById('bag-checker-sort')?.value || 'name';
+  const byName = (a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true });
+  const pts = state.points.slice();
+  if (mode === 'pose') {
+    pts.sort((a, b) => {
+      const da = a.poseDate || '', db = b.poseDate || '';
+      if (!da && !db) return byName(a, b);
+      if (!da) return 1;
+      if (!db) return -1;
+      return da.localeCompare(db) || byName(a, b);
+    });
+  } else {
+    pts.sort(byName);
+  }
+  return pts;
+}
+
+// Un sac est « fait » quand le point a du matériel et que tout est coché « dans le sac ».
+function isBagDone(pointId) {
+  const assigned = state.assignments.filter(a => a.pointId === pointId);
+  return assigned.length > 0 && assigned.every(a => a.inBag);
+}
+
+// Reflète l'état du sac sélectionné sur le menu déroulant (bordure/texte verts).
+function updateBagDoneIndicator() {
+  const sel = document.getElementById('bag-checker-point-select');
+  sel.classList.toggle('bag-done', !!sel.value && isBagDone(sel.value));
+}
+
 function populateBagCheckerSelect() {
   const sel = document.getElementById('bag-checker-point-select');
   const current = sel.value;
   sel.innerHTML = '<option value="">— Sélectionner un point —</option>';
-  state.points.forEach(p => {
+  sortedBagPoints().forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.id;
-    opt.textContent = p.name;
+    const label = p.poseDate ? `${p.name}  ·  ${formatPoseDate(p.poseDate)}` : p.name;
+    if (isBagDone(p.id)) {                  // sac déjà fait → en vert avec ✓
+      opt.textContent = '✓ ' + label;
+      opt.classList.add('bag-opt-done');
+      opt.style.color = 'var(--success)';
+    } else {
+      opt.textContent = label;
+    }
     sel.appendChild(opt);
   });
   sel.value = current;
+  updateBagDoneIndicator();
 }
 
 function renderBagChecker() {
@@ -643,6 +693,7 @@ function renderBagChecker() {
           info.classList.toggle('in-bag', v);
           saveState();
           refreshPointCard(pointId);
+          populateBagCheckerSelect();   // met à jour le vert « sac fait » dans la liste
         }
       });
 
@@ -1183,6 +1234,10 @@ function renderDetailModal() {
     descEl.textContent   = point.desc || '';
     descEl.style.display = point.desc ? '' : 'none';
 
+    const poseEl = document.getElementById('detail-point-pose');
+    poseEl.textContent   = point.poseDate ? `📅 Pose : ${formatPoseDate(point.poseDate)}` : '';
+    poseEl.style.display = point.poseDate ? '' : 'none';
+
     document.getElementById('detail-point-comment').value = point.comment || '';
 
     renderDetailAssignedList();
@@ -1193,6 +1248,7 @@ function renderDetailModal() {
 
     document.getElementById('edit-point-name').value = point.name;
     document.getElementById('edit-point-desc').value = point.desc || '';
+    document.getElementById('edit-point-date').value = point.poseDate || '';
   }
 }
 
@@ -1295,6 +1351,7 @@ function renderDetailAssignedList() {
         lblPlaced.classList.toggle('checked', chkPlaced.checked);
         saveState();
         updatePointCardColor();
+        populateBagCheckerSelect();   // garde le vert « sac fait » à jour côté Bag Checker
       }
     };
 
@@ -1340,6 +1397,7 @@ function populateDetailAssignSelect() {
 function openAddPointModal() {
   document.getElementById('input-point-name').value = '';
   document.getElementById('input-point-desc').value = '';
+  document.getElementById('input-point-date').value = '';
   document.getElementById('input-point-comment').value = '';
   document.getElementById('modal-add-point').classList.remove('hidden');
   document.getElementById('overlay').classList.remove('hidden');
@@ -1388,6 +1446,7 @@ document.querySelectorAll('.admin-subtab-btn').forEach(btn => {
 
 // Bag Checker
 document.getElementById('bag-checker-point-select').addEventListener('change', renderBagChecker);
+document.getElementById('bag-checker-sort').addEventListener('change', populateBagCheckerSelect);
 
 // Commentaire éditable depuis le Bag Checker (spécifique au point sélectionné)
 document.getElementById('bag-checker-comment').addEventListener('input', e => {
@@ -1450,9 +1509,10 @@ document.getElementById('form-add-point').addEventListener('submit', e => {
   e.preventDefault();
   const name = document.getElementById('input-point-name').value.trim();
   const desc = document.getElementById('input-point-desc').value.trim();
+  const poseDate = document.getElementById('input-point-date').value;
   const comment = document.getElementById('input-point-comment').value.trim();
   if (!name) return;
-  state.points.push({ id: uid(), name, desc, comment });
+  state.points.push({ id: uid(), name, desc, poseDate, comment });
   saveState();
   closeAddPointModal(); renderPoints();
 });
@@ -1489,10 +1549,11 @@ document.getElementById('form-edit-point').addEventListener('submit', e => {
   e.preventDefault();
   const name = document.getElementById('edit-point-name').value.trim();
   const desc = document.getElementById('edit-point-desc').value.trim();
+  const poseDate = document.getElementById('edit-point-date').value;
   if (!name || !activePointId) return;
   const idx = state.points.findIndex(p => p.id === activePointId);
-  if (idx !== -1) state.points[idx] = { ...state.points[idx], name, desc };
-  saveState(); updatePointCardColor(); renderPoints(); setDetailMode('view');
+  if (idx !== -1) state.points[idx] = { ...state.points[idx], name, desc, poseDate };
+  saveState(); updatePointCardColor(); renderPoints(); populateBagCheckerSelect(); setDetailMode('view');
 });
 
 document.getElementById('btn-delete-point').addEventListener('click', () => {

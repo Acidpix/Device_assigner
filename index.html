@@ -58,13 +58,23 @@
         </div>
 
         <div class="bag-checker-control">
-          <label>Point de distribution
-            <div class="bag-select-wrapper">
-              <select id="bag-checker-point-select" class="bag-point-select">
-                <option value="">— Sélectionner un point —</option>
-              </select>
-            </div>
-          </label>
+          <div class="bag-checker-control-row">
+            <label class="bag-control-point">Point de distribution
+              <div class="bag-select-wrapper">
+                <select id="bag-checker-point-select" class="bag-point-select">
+                  <option value="">— Sélectionner un point —</option>
+                </select>
+              </div>
+            </label>
+            <label class="bag-control-sort">Trier par
+              <div class="bag-select-wrapper">
+                <select id="bag-checker-sort" class="bag-point-select">
+                  <option value="name">Numéro de point</option>
+                  <option value="pose">Date de pose</option>
+                </select>
+              </div>
+            </label>
+          </div>
         </div>
 
         <div id="bag-checker-content" class="bag-checker-content hidden">
@@ -206,6 +216,7 @@
         <div class="modal-header-info">
           <h3 id="detail-point-name"></h3>
           <p id="detail-point-desc" class="modal-subtitle"></p>
+          <p id="detail-point-pose" class="modal-subtitle detail-pose"></p>
         </div>
         <div class="modal-header-actions">
           <button class="btn-ghost btn-sm" id="btn-detail-edit">✎ Modifier</button>
@@ -250,6 +261,9 @@
           <label>Description
             <input type="text" id="edit-point-desc" />
           </label>
+          <label>Date de pose
+            <input type="date" id="edit-point-date" />
+          </label>
           <div class="edit-form-actions">
             <button type="submit" class="btn-primary">Sauvegarder</button>
             <button type="button" id="btn-edit-cancel" class="btn-ghost">Annuler</button>
@@ -277,6 +291,9 @@
           </label>
           <label>Description (optionnel)
             <input type="text" id="input-point-desc" placeholder="ex : Zone VIP, côté jardin…" />
+          </label>
+          <label>Date de pose (optionnel)
+            <input type="date" id="input-point-date" />
           </label>
           <label>Commentaire (optionnel)
             <textarea id="input-point-comment" rows="3" placeholder="Note visible dans le Bag Checker…"></textarea>
