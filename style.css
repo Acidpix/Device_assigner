@@ -283,16 +283,24 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .admin-subtab-panel.active { display: block; }
 
 /* ── Récap déploiement (facturation) ── */
-.recap-summary { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: .92rem; color: var(--text-muted); margin-bottom: 24px; }
-.recap-summary strong { color: var(--text); font-weight: 700; }
-.recap-cat-block:last-child { margin-bottom: 0; }
-.recap-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.recap-table th, .recap-table td { text-align: left; padding: 10px 16px; font-size: .9rem; border-bottom: 1px solid var(--border); }
-.recap-table thead th { background: var(--surface2); color: var(--text-muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
-.recap-table tbody tr:last-child td { border-bottom: none; }
-.recap-table tbody tr:hover td { background: var(--surface2); }
-.recap-qty-col { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.recap-table td.recap-qty-col { font-weight: 700; color: var(--text); }
+.recap-summary { display: inline-flex; align-items: center; gap: 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; padding: 9px 20px; font-size: .9rem; color: var(--text-muted); margin-bottom: 22px; }
+.recap-summary-stat strong { color: var(--text); font-weight: 700; font-size: 1.1rem; margin-right: 5px; }
+.recap-summary-sep { width: 1px; height: 18px; background: var(--border); }
+
+.recap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 720px) { .recap-grid { grid-template-columns: 1fr; } }
+
+.recap-cat-card { background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--cat); border-radius: var(--radius); overflow: hidden; }
+.recap-cat-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.recap-cat-name { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: .95rem; }
+.recap-cat-name::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--cat); flex-shrink: 0; }
+.recap-cat-sub { background: var(--surface2); color: var(--cat); border: 1px solid var(--border); font-weight: 700; font-size: .82rem; min-width: 30px; text-align: center; padding: 3px 11px; border-radius: 999px; }
+.recap-rows { list-style: none; }
+.recap-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 16px; font-size: .87rem; border-bottom: 1px solid var(--border); }
+.recap-row:last-child { border-bottom: none; }
+.recap-row:hover { background: var(--surface2); }
+.recap-row-name { color: var(--text); }
+.recap-row-qty { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); background: var(--surface2); min-width: 26px; text-align: center; padding: 2px 9px; border-radius: 6px; font-size: .82rem; }
 
 @media print {
   body::before { display: none; }
@@ -302,12 +310,15 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
   main { max-width: none; padding: 0; }
   #recap-card { border: none; padding: 0; }
   .recap-summary { background: #fff; border: 1px solid #999; color: #000; }
-  .recap-summary strong, .config-cat-header h3, .cat-total span { color: #000; }
-  .cat-total { background: #fff; border: 1px solid #999; color: #000; }
-  .recap-table { border-color: #999; }
-  .recap-table th, .recap-table td { border-color: #ccc; color: #000; }
-  .recap-table thead th { background: #eee; color: #000; }
-  .recap-cat-block { break-inside: avoid; }
+  .recap-summary strong { color: #000; }
+  .recap-grid { gap: 10px; }
+  .recap-cat-card { border: 1px solid #999; break-inside: avoid; }
+  .recap-cat-top { border-bottom: 1px solid #ccc; }
+  .recap-cat-name { color: #000; }
+  .recap-cat-sub { background: #fff; border-color: #999; }
+  .recap-row { border-bottom: 1px solid #eee; }
+  .recap-row-name { color: #000; }
+  .recap-row-qty { color: #000; background: #f0f0f0; }
 }
 
 /* ── Admin ── */

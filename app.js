@@ -1222,36 +1222,39 @@ function renderDeployRecap() {
   const grandTotal  = Object.values(countByItem).reduce((s, n) => s + n, 0);
   const pointsUsed  = new Set(state.assignments.map(a => a.pointId)).size;
 
-  summary.innerHTML = `Total déployé : <strong>${grandTotal}</strong> unité${grandTotal > 1 ? 's' : ''}`
-    + ` réparti${grandTotal > 1 ? 'es' : 'e'} sur <strong>${pointsUsed}</strong> point${pointsUsed > 1 ? 's' : ''}`;
+  summary.innerHTML = `
+    <span class="recap-summary-stat"><strong>${grandTotal}</strong> unité${grandTotal > 1 ? 's' : ''} déployée${grandTotal > 1 ? 's' : ''}</span>
+    <span class="recap-summary-sep"></span>
+    <span class="recap-summary-stat"><strong>${pointsUsed}</strong> point${pointsUsed > 1 ? 's' : ''}</span>`;
 
   if (!grandTotal) {
     container.innerHTML = '<div class="empty-state">Aucun matériel assigné pour le moment.</div>';
     return;
   }
 
+  const grid = document.createElement('div');
+  grid.className = 'recap-grid';
+
   state.categories.forEach(cat => {
     const items = state.items.filter(i => i.catId === cat.id && countByItem[i.id]);
     if (!items.length) return;
     const catTotal = items.reduce((s, i) => s + countByItem[i.id], 0);
 
-    const block = document.createElement('div');
-    block.className = 'config-cat-block recap-cat-block';
-    block.innerHTML = `
-      <div class="config-cat-header">
-        <span class="cat-dot" style="background:${cat.color}"></span>
-        <h3>${cat.name}</h3>
-        <span class="cat-total">Sous-total : <span>${catTotal}</span></span>
+    const card = document.createElement('div');
+    card.className = 'recap-cat-card';
+    card.style.setProperty('--cat', cat.color);
+    card.innerHTML = `
+      <div class="recap-cat-top">
+        <span class="recap-cat-name">${cat.name}</span>
+        <span class="recap-cat-sub" title="Sous-total déployé">${catTotal}</span>
       </div>
-      <table class="recap-table">
-        <thead><tr><th>Type de matériel</th><th class="recap-qty-col">Quantité déployée</th></tr></thead>
-        <tbody>
-          ${items.map(i => `<tr><td>${i.name}</td><td class="recap-qty-col">${countByItem[i.id]}</td></tr>`).join('')}
-        </tbody>
-      </table>
-    `;
-    container.appendChild(block);
+      <ul class="recap-rows">
+        ${items.map(i => `<li class="recap-row"><span class="recap-row-name">${i.name}</span><span class="recap-row-qty">${countByItem[i.id]}</span></li>`).join('')}
+      </ul>`;
+    grid.appendChild(card);
   });
+
+  container.appendChild(grid);
 }
 
 // Export CSV (séparateur « ; » + BOM UTF-8 → s'ouvre proprement dans Excel FR).
