@@ -146,6 +146,14 @@ function poseStatus(iso) {
   return d >= today ? 'ok' : 'late';
 }
 
+// Couleur du badge pour un point : un point entièrement posé reste vert
+// même si la date est dépassée (l'échéance n'a plus d'importance).
+function posePillStatus(point) {
+  if (!point.poseDate) return '';
+  if (getPlacementStatus(point.id) === 'full') return 'ok';
+  return poseStatus(point.poseDate);
+}
+
 function getCat(id)   { return state.categories.find(c => c.id === id); }
 function getItem(id)  { return state.items.find(i => i.id === id); }
 function getPoint(id) { return state.points.find(p => p.id === id); }
@@ -286,7 +294,7 @@ function makePointCard(point) {
   else if (placement === 'full') placeBadge = '<span class="point-place-badge full">✓ Posé</span>';
 
   const poseHtml = point.poseDate
-    ? `<div class="point-card-pose ${poseStatus(point.poseDate)}" title="Date de pose">📅 ${formatPoseDate(point.poseDate)}</div>`
+    ? `<div class="point-card-pose ${posePillStatus(point)}" title="Date de pose">📅 ${formatPoseDate(point.poseDate)}</div>`
     : '';
 
   card.innerHTML = `
@@ -1277,10 +1285,12 @@ function renderDetailPose() {
   badge.type = 'button';
   badge.className = 'pose-badge';
   if (point.poseDate) {
-    const st = poseStatus(point.poseDate);
+    const st = posePillStatus(point);
+    const placed = getPlacementStatus(point.id) === 'full';
     badge.classList.add(st);
     badge.textContent = `📅 ${formatPoseDate(point.poseDate)}`;
-    badge.title = (st === 'late' ? 'Pose dépassée' : 'Pose à venir') + ' · cliquer pour modifier';
+    const note = placed ? 'Posé' : (st === 'late' ? 'Pose dépassée' : 'Pose à venir');
+    badge.title = note + ' · cliquer pour modifier';
   } else {
     badge.classList.add('empty');
     badge.textContent = '📅 Définir la date';
@@ -1421,6 +1431,7 @@ function renderDetailAssignedList() {
         lblPlaced.classList.toggle('checked', chkPlaced.checked);
         saveState();
         updatePointCardColor();
+        renderDetailPose();           // « posé » peut repasser le badge date au vert
         populateBagCheckerSelect();   // garde le vert « sac fait » à jour côté Bag Checker
       }
     };
@@ -1612,6 +1623,7 @@ document.getElementById('btn-place-all').addEventListener('click', () => {
   assigned.forEach(a => { a.placed = !allPlaced; });
   saveState();
   renderDetailAssignedList();
+  renderDetailPose();
   updatePointCardColor();
 });
 
