@@ -137,6 +137,15 @@ function formatPoseDate(iso) {
   return (y && m && d) ? `${d}/${m}/${y}` : iso;
 }
 
+// État d'une date de pose : 'ok' (aujourd'hui ou à venir → vert), 'late' (dépassée → rouge).
+function poseStatus(iso) {
+  if (!iso) return '';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d)) return '';
+  return d >= today ? 'ok' : 'late';
+}
+
 function getCat(id)   { return state.categories.find(c => c.id === id); }
 function getItem(id)  { return state.items.find(i => i.id === id); }
 function getPoint(id) { return state.points.find(p => p.id === id); }
@@ -276,18 +285,24 @@ function makePointCard(point) {
   if (placement === 'partial')   placeBadge = '<span class="point-place-badge partial">◐ Partiellement posé</span>';
   else if (placement === 'full') placeBadge = '<span class="point-place-badge full">✓ Posé</span>';
 
+  const poseHtml = point.poseDate
+    ? `<div class="point-card-pose ${poseStatus(point.poseDate)}" title="Date de pose">📅 ${formatPoseDate(point.poseDate)}</div>`
+    : '';
+
   card.innerHTML = `
-    <div class="point-card-header">
-      <div class="point-card-title">
-        <span class="point-card-name">${point.name}</span>
-        ${placeBadge}
+    <div class="point-card-main">
+      <div class="point-card-header">
+        <div class="point-card-title">
+          <span class="point-card-name">${point.name}</span>
+          ${placeBadge}
+        </div>
+        <span class="point-click-hint">↗ détails</span>
       </div>
-      <span class="point-click-hint">↗ détails</span>
+      ${point.desc ? `<div class="point-card-desc">${point.desc}</div>` : ''}
+      <div class="point-summary">${summaryHtml}</div>
+      <div class="point-tooltip">${tooltipHtml}</div>
     </div>
-    ${point.desc ? `<div class="point-card-desc">${point.desc}</div>` : ''}
-    ${point.poseDate ? `<div class="point-card-pose">📅 Pose : ${formatPoseDate(point.poseDate)}</div>` : ''}
-    <div class="point-summary">${summaryHtml}</div>
-    <div class="point-tooltip">${tooltipHtml}</div>
+    ${poseHtml}
   `;
 
   card.addEventListener('click', () => openPointDetail(point.id));
@@ -1234,9 +1249,7 @@ function renderDetailModal() {
     descEl.textContent   = point.desc || '';
     descEl.style.display = point.desc ? '' : 'none';
 
-    const poseEl = document.getElementById('detail-point-pose');
-    poseEl.textContent   = point.poseDate ? `📅 Pose : ${formatPoseDate(point.poseDate)}` : '';
-    poseEl.style.display = point.poseDate ? '' : 'none';
+    renderDetailPose();
 
     document.getElementById('detail-point-comment').value = point.comment || '';
 
@@ -1250,6 +1263,63 @@ function renderDetailModal() {
     document.getElementById('edit-point-desc').value = point.desc || '';
     document.getElementById('edit-point-date').value = point.poseDate || '';
   }
+}
+
+// Badge « date de pose » sous le bouton Modifier : vert/rouge selon l'échéance,
+// cliquable pour éditer la date directement (sans passer par le mode édition complet).
+function renderDetailPose() {
+  const point = getPoint(activePointId);
+  const wrap  = document.getElementById('detail-pose-wrap');
+  if (!point || !wrap) return;
+  wrap.innerHTML = '';
+
+  const badge = document.createElement('button');
+  badge.type = 'button';
+  badge.className = 'pose-badge';
+  if (point.poseDate) {
+    const st = poseStatus(point.poseDate);
+    badge.classList.add(st);
+    badge.textContent = `📅 ${formatPoseDate(point.poseDate)}`;
+    badge.title = (st === 'late' ? 'Pose dépassée' : 'Pose à venir') + ' · cliquer pour modifier';
+  } else {
+    badge.classList.add('empty');
+    badge.textContent = '📅 Définir la date';
+    badge.title = 'Cliquer pour définir la date de pose';
+  }
+  badge.addEventListener('click', editDetailPose);
+  wrap.appendChild(badge);
+}
+
+function editDetailPose() {
+  const point = getPoint(activePointId);
+  const wrap  = document.getElementById('detail-pose-wrap');
+  if (!point || !wrap) return;
+  wrap.innerHTML = '';
+
+  const input = document.createElement('input');
+  input.type  = 'date';
+  input.className = 'pose-date-input';
+  input.value = point.poseDate || '';
+  wrap.appendChild(input);
+  input.focus();
+  if (input.showPicker) { try { input.showPicker(); } catch (_) {} }
+
+  let done = false;
+  const commit = () => {
+    if (done) return;
+    done = true;
+    const idx = state.points.findIndex(p => p.id === activePointId);
+    if (idx !== -1) { state.points[idx].poseDate = input.value; saveState(); }
+    renderDetailPose();
+    renderPoints();
+    populateBagCheckerSelect();
+  };
+  input.addEventListener('change', commit);
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  input.blur();
+    if (e.key === 'Escape') { done = true; renderDetailPose(); }
+  });
 }
 
 function renderDetailAssignedList() {
