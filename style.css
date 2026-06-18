@@ -282,6 +282,34 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .admin-subtab-panel { display: none; }
 .admin-subtab-panel.active { display: block; }
 
+/* ── Récap déploiement (facturation) ── */
+.recap-summary { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: .92rem; color: var(--text-muted); margin-bottom: 24px; }
+.recap-summary strong { color: var(--text); font-weight: 700; }
+.recap-cat-block:last-child { margin-bottom: 0; }
+.recap-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.recap-table th, .recap-table td { text-align: left; padding: 10px 16px; font-size: .9rem; border-bottom: 1px solid var(--border); }
+.recap-table thead th { background: var(--surface2); color: var(--text-muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+.recap-table tbody tr:last-child td { border-bottom: none; }
+.recap-table tbody tr:hover td { background: var(--surface2); }
+.recap-qty-col { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.recap-table td.recap-qty-col { font-weight: 700; color: var(--text); }
+
+@media print {
+  body::before { display: none; }
+  header, .admin-subtabs, #tab-admin > .section-header, .admin-hint,
+  .io-actions, #login-screen, .overlay, .modal, .nav-logout { display: none !important; }
+  body, main { background: #fff; color: #000; }
+  main { max-width: none; padding: 0; }
+  #recap-card { border: none; padding: 0; }
+  .recap-summary { background: #fff; border: 1px solid #999; color: #000; }
+  .recap-summary strong, .config-cat-header h3, .cat-total span { color: #000; }
+  .cat-total { background: #fff; border: 1px solid #999; color: #000; }
+  .recap-table { border-color: #999; }
+  .recap-table th, .recap-table td { border-color: #ccc; color: #000; }
+  .recap-table thead th { background: #eee; color: #000; }
+  .recap-cat-block { break-inside: avoid; }
+}
+
 /* ── Admin ── */
 .admin-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 @media (max-width: 640px) { .admin-columns { grid-template-columns: 1fr; } }

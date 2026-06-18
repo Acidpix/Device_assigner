@@ -135,6 +135,7 @@
       <div class="admin-subtabs">
         <button class="admin-subtab-btn active" data-subtab="reserve">Réserve</button>
         <button class="admin-subtab-btn" data-subtab="bag-checker">Bag Checker</button>
+        <button class="admin-subtab-btn" data-subtab="recap">Récap déploiement</button>
       </div>
 
       <!-- Sous-onglet Réserve -->
@@ -202,6 +203,22 @@
             </form>
             <ul id="list-essentials" class="admin-list"></ul>
           </div>
+        </div>
+      </div>
+
+      <!-- Sous-onglet Récap déploiement -->
+      <div id="admin-subtab-recap" class="admin-subtab-panel">
+        <div class="admin-card" id="recap-card">
+          <div class="admin-card-header">
+            <h3>Récap déploiement</h3>
+            <div class="io-actions" style="margin:0">
+              <button type="button" id="btn-recap-print" class="btn-ghost">🖨 Imprimer</button>
+              <button type="button" id="btn-recap-export" class="btn-primary">⬇ Exporter CSV</button>
+            </div>
+          </div>
+          <p class="admin-hint">Tout le matériel assigné à des points, regroupé par catégorie et type de matériel. Sert de base à la facturation.</p>
+          <div id="recap-deploy-summary" class="recap-summary"></div>
+          <div id="recap-deploy-list"></div>
         </div>
       </div>
     </section>

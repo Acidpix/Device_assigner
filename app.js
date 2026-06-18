@@ -1199,6 +1199,89 @@ function buildItemRow(item, list) {
   list.appendChild(li);
 }
 
+// ── Render: Récap déploiement (facturation) ─────────────────────────────────
+// Liste tout le matériel assigné à des points, regroupé par catégorie puis type.
+// La quantité déployée d'un type = nombre de ses unités actuellement assignées.
+
+function deployRecapCounts() {
+  const assignedUnitIds = new Set(state.assignments.map(a => a.unitId));
+  const countByItem = {};
+  state.units.forEach(u => {
+    if (assignedUnitIds.has(u.id)) countByItem[u.itemId] = (countByItem[u.itemId] || 0) + 1;
+  });
+  return countByItem;
+}
+
+function renderDeployRecap() {
+  const summary   = document.getElementById('recap-deploy-summary');
+  const container = document.getElementById('recap-deploy-list');
+  if (!summary || !container) return;
+  container.innerHTML = '';
+
+  const countByItem = deployRecapCounts();
+  const grandTotal  = Object.values(countByItem).reduce((s, n) => s + n, 0);
+  const pointsUsed  = new Set(state.assignments.map(a => a.pointId)).size;
+
+  summary.innerHTML = `Total déployé : <strong>${grandTotal}</strong> unité${grandTotal > 1 ? 's' : ''}`
+    + ` réparti${grandTotal > 1 ? 'es' : 'e'} sur <strong>${pointsUsed}</strong> point${pointsUsed > 1 ? 's' : ''}`;
+
+  if (!grandTotal) {
+    container.innerHTML = '<div class="empty-state">Aucun matériel assigné pour le moment.</div>';
+    return;
+  }
+
+  state.categories.forEach(cat => {
+    const items = state.items.filter(i => i.catId === cat.id && countByItem[i.id]);
+    if (!items.length) return;
+    const catTotal = items.reduce((s, i) => s + countByItem[i.id], 0);
+
+    const block = document.createElement('div');
+    block.className = 'config-cat-block recap-cat-block';
+    block.innerHTML = `
+      <div class="config-cat-header">
+        <span class="cat-dot" style="background:${cat.color}"></span>
+        <h3>${cat.name}</h3>
+        <span class="cat-total">Sous-total : <span>${catTotal}</span></span>
+      </div>
+      <table class="recap-table">
+        <thead><tr><th>Type de matériel</th><th class="recap-qty-col">Quantité déployée</th></tr></thead>
+        <tbody>
+          ${items.map(i => `<tr><td>${i.name}</td><td class="recap-qty-col">${countByItem[i.id]}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+    container.appendChild(block);
+  });
+}
+
+// Export CSV (séparateur « ; » + BOM UTF-8 → s'ouvre proprement dans Excel FR).
+function exportDeployRecapCSV() {
+  const countByItem = deployRecapCounts();
+  const rows = [['Catégorie', 'Type de matériel', 'Quantité déployée']];
+  state.categories.forEach(cat => {
+    state.items
+      .filter(i => i.catId === cat.id && countByItem[i.id])
+      .forEach(i => rows.push([cat.name, i.name, String(countByItem[i.id])]));
+  });
+  const grandTotal = Object.values(countByItem).reduce((s, n) => s + n, 0);
+  rows.push(['', 'Total', String(grandTotal)]);
+
+  const esc = v => `"${String(v).replace(/"/g, '""')}"`;
+  const BOM = String.fromCharCode(0xFEFF);   // Excel FR : force l'interprétation UTF-8
+  const csv = BOM + rows.map(r => r.map(esc).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const d = new Date();
+  const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const aEl = document.createElement('a');
+  aEl.href = url;
+  aEl.download = `recap-deploiement-solidays-${stamp}.csv`;
+  document.body.appendChild(aEl);
+  aEl.click();
+  aEl.remove();
+  URL.revokeObjectURL(url);
+}
+
 // ── Reserve filter ─────────────────────────────────────────────────────────
 
 function populateReserveFilter() {
@@ -1499,6 +1582,7 @@ function renderAll() {
   populateBagCheckerSelect();
   renderBagChecker();
   renderAdmin();
+  renderDeployRecap();
   if (configMode) renderConfigMode();   // garde la vue config à jour après une synchro
 }
 
@@ -1522,8 +1606,13 @@ document.querySelectorAll('.admin-subtab-btn').forEach(btn => {
     document.querySelectorAll('.admin-subtab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`admin-subtab-${btn.dataset.subtab}`).classList.add('active');
+    if (btn.dataset.subtab === 'recap') renderDeployRecap();   // recalcule à l'ouverture
   });
 });
+
+// Récap déploiement
+document.getElementById('btn-recap-export').addEventListener('click', exportDeployRecapCSV);
+document.getElementById('btn-recap-print').addEventListener('click', () => window.print());
 
 // Bag Checker
 document.getElementById('bag-checker-point-select').addEventListener('change', renderBagChecker);
