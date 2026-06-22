@@ -52,6 +52,8 @@
     .samy-card.green  { background: rgba(31,107,87,.82); color: #fff; border-color: var(--success); }
     /* Partiel : contour ambré */
     .samy-card.orange { background: rgba(34,38,58,.55); color: var(--text); border-color: #f9a825; }
+    /* Posé mais pas encore validé/pointé : aplat bleu */
+    .samy-card.blue   { background: rgba(15,76,110,.82); color: #fff; border-color: #00b8ff; }
     .samy-card-sub { font-size: .72rem; opacity: .8; }
 
     /* Cartes caméra : emplacement (gros) > point > nom (petit) */
@@ -63,6 +65,7 @@
     .samy-badge { display: inline-flex; align-items: center; gap: 4px; font-size: .68rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
     .samy-badge.full    { background: var(--success); color: #06281f; border: 1px solid var(--success); }
     .samy-badge.partial { background: rgba(249,168,37,.15); color: #f9a825; border: 1px solid rgba(249,168,37,.4); }
+    .samy-badge.pending { background: #00b8ff; color: #04222e; border: 1px solid #00b8ff; }
     .samy-badge.none    { background: rgba(0,184,255,.14); color: #7fd6ff; border: 1px solid rgba(0,184,255,.4); }
 
     /* Onglets Points / Caméras */
@@ -160,8 +163,8 @@
       if (!as.length) return 'grey';
       const placed = as.filter(a => a.placed).length;
       if (placed === 0) return 'grey';
-      // « Entièrement posé » exige aussi que le point soit validé/pointé (point.validated).
-      if (placed === as.length) return getPoint(pointId)?.validated ? 'green' : 'orange';
+      // Tout posé : vert si validé/pointé, sinon bleu (en attente de validation).
+      if (placed === as.length) return getPoint(pointId)?.validated ? 'green' : 'blue';
       return 'orange';
     }
 
@@ -234,8 +237,7 @@
     }
 
     let sortMode = 'num';
-    const STATE_RANK = { green: 0, orange: 1, grey: 2 };   // posés en premier
-    const BADGE = { full: 'Posé', partial: 'Partiellement posé' };
+    const STATE_RANK = { green: 0, blue: 1, orange: 2, grey: 3 };   // posés en premier
 
     function renderGrid() {
       const grid = $('samy-grid');
@@ -267,11 +269,15 @@
         main.appendChild(name);
         card.appendChild(main);
 
-        if (st === 'green' || st === 'orange') {
+        if (st !== 'grey') {
           const badge = document.createElement('span');
-          const kind = st === 'green' ? 'full' : 'partial';
-          badge.className = 'samy-badge ' + kind;
-          badge.textContent = (kind === 'full' ? '✓ ' : '◐ ') + BADGE[kind];
+          const META = {
+            green:  { kind: 'full',    txt: '✓ Posé' },
+            blue:   { kind: 'pending', txt: '📍 Posé · à valider' },
+            orange: { kind: 'partial', txt: '◐ Partiellement posé' },
+          }[st];
+          badge.className = 'samy-badge ' + META.kind;
+          badge.textContent = META.txt;
           card.appendChild(badge);
         }
 

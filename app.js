@@ -283,15 +283,18 @@ function makePointCard(point) {
   const card = document.createElement('div');
   const stateColor = getPointStateColor(point.id);
   const placement  = getPlacementStatus(point.id);
-  card.className = `point-card state-${stateColor}` + (placement === 'full' ? ' placed-full' : '');
+  card.className = `point-card state-${stateColor}`
+    + (placement === 'full'   ? ' placed-full'    : '')
+    + (placement === 'placed' ? ' placed-pending' : '');
   card.setAttribute('role', 'button');
   card.tabIndex = 0;
   card.draggable = !IS_TOUCH;   // réorganisation par glisser-déposer désactivée au tactile
   card.dataset.pointId = point.id;
 
   let placeBadge = '';
-  if (placement === 'partial')   placeBadge = '<span class="point-place-badge partial">◐ Partiellement posé</span>';
-  else if (placement === 'full') placeBadge = '<span class="point-place-badge full">✓ Posé</span>';
+  if (placement === 'partial')      placeBadge = '<span class="point-place-badge partial">◐ Partiellement posé</span>';
+  else if (placement === 'placed')  placeBadge = '<span class="point-place-badge placed">📍 Posé · à valider</span>';
+  else if (placement === 'full')    placeBadge = '<span class="point-place-badge full">✓ Posé</span>';
 
   const poseHtml = point.poseDate
     ? `<div class="point-card-pose ${posePillStatus(point)}" title="Date de pose">📅 ${formatPoseDate(point.poseDate)}</div>`
@@ -335,15 +338,16 @@ function getPointStateColor(pointId) {
   return 'gris';
 }
 
-// État de pose : 'empty' (rien d'assigné) | 'none' | 'partial' | 'full'
-// « full » exige aussi que le point soit validé/pointé (point.validated) :
-// tant que la case n'est pas cochée, un point tout posé reste « partial ».
+// État de pose : 'empty' (rien d'assigné) | 'none' | 'partial' | 'placed' | 'full'
+// Tout le matériel posé donne :
+//   - 'full'   si le point est validé/pointé (point.validated)
+//   - 'placed' sinon (tout posé mais en attente de validation → fond bleu)
 function getPlacementStatus(pointId) {
   const assigned = state.assignments.filter(a => a.pointId === pointId);
   if (!assigned.length) return 'empty';
   const placed = assigned.filter(a => a.placed).length;
   if (placed === 0) return 'none';
-  if (placed === assigned.length) return getPoint(pointId)?.validated ? 'full' : 'partial';
+  if (placed === assigned.length) return getPoint(pointId)?.validated ? 'full' : 'placed';
   return 'partial';
 }
 
@@ -1385,10 +1389,12 @@ function renderDetailPose() {
   badge.className = 'pose-badge';
   if (point.poseDate) {
     const st = posePillStatus(point);
-    const placed = getPlacementStatus(point.id) === 'full';
+    const ps = getPlacementStatus(point.id);
     badge.classList.add(st);
     badge.textContent = `📅 ${formatPoseDate(point.poseDate)}`;
-    const note = placed ? 'Posé' : (st === 'late' ? 'Pose dépassée' : 'Pose à venir');
+    const note = ps === 'full'   ? 'Posé'
+               : ps === 'placed' ? 'Posé · à valider'
+               : (st === 'late' ? 'Pose dépassée' : 'Pose à venir');
     badge.title = note + ' · cliquer pour modifier';
   } else {
     badge.classList.add('empty');

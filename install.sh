@@ -114,19 +114,22 @@ server {
         proxy_read_timeout 10s;
     }
 
-    # Page publique lecture seule
+    # Page publique lecture seule — jamais mise en cache
     location = /samy {
         try_files /samy.html =404;
+        add_header Cache-Control "no-store";
     }
 
-    # Cache fichiers statiques
+    # CSS / JS : revalidés à chaque chargement (ETag → 304 si inchangé,
+    # nouveau contenu après un déploiement). Évite d'avoir à vider le cache.
     location ~* \.(css|js)$ {
-        expires 1d;
-        add_header Cache-Control "public, immutable";
+        add_header Cache-Control "no-cache";
     }
 
     location / {
         try_files \$uri \$uri/ /index.html;
+        # index.html toujours récupéré frais → charge la dernière version des assets
+        add_header Cache-Control "no-store";
     }
 
     access_log off;

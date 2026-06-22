@@ -121,12 +121,18 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .point-card-name { font-weight: 700; font-size: 1rem; }
 .point-place-badge { display: inline-flex; align-items: center; gap: 4px; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
 .point-place-badge.partial { background: rgba(249,168,37,.15); color: #f9a825; border: 1px solid rgba(249,168,37,.4); }
+.point-place-badge.placed { background: rgba(0,184,255,.16); color: #00b8ff; border: 1px solid rgba(0,184,255,.45); }
 .point-place-badge.full { background: rgba(0,184,148,.18); color: var(--success); border: 1px solid rgba(0,184,148,.45); }
 
 /* Fond vert (plein mais adouci) quand tout le matériel est posé */
 .point-card.placed-full { background: rgba(31,107,87,.82); border-color: var(--success); }
 .point-card.placed-full:hover { box-shadow: 0 0 0 3px rgba(0,184,148,.3); border-color: var(--success); }
 .point-card.placed-full .point-place-badge.full { background: var(--success); color: #06281f; border-color: var(--success); }
+
+/* Fond bleu quand tout est posé mais le point n'est pas encore validé/pointé */
+.point-card.placed-pending { background: rgba(15,76,110,.82); border-color: #00b8ff; }
+.point-card.placed-pending:hover { box-shadow: 0 0 0 3px rgba(0,184,255,.3); border-color: #00b8ff; }
+.point-card.placed-pending .point-place-badge.placed { background: #00b8ff; color: #04222e; border-color: #00b8ff; }
 .point-click-hint { font-size: .72rem; color: var(--text-muted); opacity: 0; transition: opacity .15s; }
 .point-card:hover .point-click-hint { opacity: 1; }
 .point-card-desc { font-size: .82rem; color: var(--text-muted); margin-bottom: 10px; }
@@ -412,13 +418,17 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .modal-header h3 { font-size: 1.05rem; font-weight: 600; }
 .modal-header-info { display: flex; flex-direction: column; gap: 3px; }
 .modal-subtitle { font-size: .82rem; color: var(--text-muted); }
-.modal-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; flex-shrink: 0; }
-.modal-header-buttons { display: flex; gap: 8px; align-items: center; }
+.modal-header-buttons { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
 
-/* Ligne « Validé / Pointé » + date de pose (sous les boutons d'en-tête) */
-.pose-row { display: flex; align-items: center; gap: 8px; }
-.validate-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,.2); cursor: pointer; font-size: .8rem; font-weight: 700; color: var(--text-muted); white-space: nowrap; user-select: none; transition: background .15s, border-color .15s, color .15s; }
-.validate-toggle input[type="checkbox"] { accent-color: var(--success); cursor: pointer; margin: 0; }
+/* En-tête détail : titre + boutons sur une ligne, puis « Validé/Pointé » + date dessous */
+.detail-view-header { flex-direction: column; align-items: stretch; gap: 12px; }
+.modal-header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.detail-view-header .modal-header-info { flex: 1 1 auto; min-width: 0; }
+
+/* Ligne « Validé / Pointé » + date de pose (pleine largeur sous le titre) */
+.pose-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.validate-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 20px; border: 1px solid var(--border); background: rgba(0,0,0,.2); cursor: pointer; font-size: .82rem; font-weight: 700; color: var(--text-muted); white-space: nowrap; user-select: none; transition: background .15s, border-color .15s, color .15s; }
+.validate-toggle input[type="checkbox"] { accent-color: var(--success); cursor: pointer; margin: 0; width: 16px; height: 16px; flex-shrink: 0; }
 .validate-toggle.checked { background: rgba(0,184,148,.15); border-color: var(--success); color: var(--success); }
 
 /* Badge « date de pose » (sous le bouton Modifier) — cliquable pour éditer */
@@ -579,6 +589,12 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
   .ar-checks { width: 100%; }
   .ar-checks .check-toggle { flex: 1; padding: 11px 8px; }
   .ar-location { min-width: 100%; }
+
+  /* En-tête détail : « Validé/Pointé » et la date occupent toute la largeur, au doigt */
+  .pose-row { gap: 8px; }
+  .validate-toggle { flex: 1 1 auto; justify-content: center; padding: 11px 12px; font-size: .9rem; }
+  .pose-row .pose-wrap { flex: 1 1 auto; }
+  .pose-row .pose-badge { width: 100%; text-align: center; padding: 11px 12px; font-size: .9rem; }
 
   /* Sous-onglets admin défilants */
   .admin-subtabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }

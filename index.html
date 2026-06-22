@@ -229,22 +229,22 @@
     <div class="modal-box">
 
       <!-- En-tête VIEW -->
-      <div id="detail-view-header" class="modal-header">
-        <div class="modal-header-info">
-          <h3 id="detail-point-name"></h3>
-          <p id="detail-point-desc" class="modal-subtitle"></p>
-        </div>
-        <div class="modal-header-actions">
+      <div id="detail-view-header" class="modal-header detail-view-header">
+        <div class="modal-header-top">
+          <div class="modal-header-info">
+            <h3 id="detail-point-name"></h3>
+            <p id="detail-point-desc" class="modal-subtitle"></p>
+          </div>
           <div class="modal-header-buttons">
             <button class="btn-ghost btn-sm" id="btn-detail-edit">✎ Modifier</button>
             <button class="modal-close" id="btn-detail-close">&times;</button>
           </div>
-          <div class="pose-row">
-            <label class="validate-toggle" id="detail-validate-toggle" title="Le point est validé/pointé — condition pour être considéré entièrement posé">
-              <input type="checkbox" id="detail-validated" />Validé / Pointé
-            </label>
-            <div id="detail-pose-wrap" class="pose-wrap"></div>
-          </div>
+        </div>
+        <div class="pose-row">
+          <label class="validate-toggle" id="detail-validate-toggle" title="Le point est validé/pointé — condition pour être considéré entièrement posé">
+            <input type="checkbox" id="detail-validated" /><span>Validé / Pointé</span>
+          </label>
+          <div id="detail-pose-wrap" class="pose-wrap"></div>
         </div>
       </div>
 
