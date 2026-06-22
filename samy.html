@@ -160,7 +160,8 @@
       if (!as.length) return 'grey';
       const placed = as.filter(a => a.placed).length;
       if (placed === 0) return 'grey';
-      if (placed === as.length) return 'green';
+      // « Entièrement posé » exige aussi que le point soit validé/pointé (point.validated).
+      if (placed === as.length) return getPoint(pointId)?.validated ? 'green' : 'orange';
       return 'orange';
     }
 

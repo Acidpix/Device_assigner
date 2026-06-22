@@ -336,12 +336,14 @@ function getPointStateColor(pointId) {
 }
 
 // État de pose : 'empty' (rien d'assigné) | 'none' | 'partial' | 'full'
+// « full » exige aussi que le point soit validé/pointé (point.validated) :
+// tant que la case n'est pas cochée, un point tout posé reste « partial ».
 function getPlacementStatus(pointId) {
   const assigned = state.assignments.filter(a => a.pointId === pointId);
   if (!assigned.length) return 'empty';
   const placed = assigned.filter(a => a.placed).length;
   if (placed === 0) return 'none';
-  if (placed === assigned.length) return 'full';
+  if (placed === assigned.length) return getPoint(pointId)?.validated ? 'full' : 'partial';
   return 'partial';
 }
 
@@ -1343,6 +1345,7 @@ function renderDetailModal() {
     descEl.textContent   = point.desc || '';
     descEl.style.display = point.desc ? '' : 'none';
 
+    renderDetailValidate();
     renderDetailPose();
 
     document.getElementById('detail-point-comment').value = point.comment || '';
@@ -1357,6 +1360,16 @@ function renderDetailModal() {
     document.getElementById('edit-point-desc').value = point.desc || '';
     document.getElementById('edit-point-date').value = point.poseDate || '';
   }
+}
+
+// Case « Validé / Pointé » à gauche de la date de pose : reflète point.validated.
+function renderDetailValidate() {
+  const point  = getPoint(activePointId);
+  const toggle = document.getElementById('detail-validate-toggle');
+  const chk    = document.getElementById('detail-validated');
+  if (!point || !toggle || !chk) return;
+  chk.checked = !!point.validated;
+  toggle.classList.toggle('checked', !!point.validated);
 }
 
 // Badge « date de pose » sous le bouton Modifier : vert/rouge selon l'échéance,
@@ -1698,6 +1711,20 @@ document.getElementById('detail-point-comment').addEventListener('input', e => {
     state.points[idx].comment = e.target.value;
     saveState();
   }
+});
+
+// Case « Validé / Pointé » (vue détail) — condition d'un point entièrement posé
+document.getElementById('detail-validated').addEventListener('change', e => {
+  if (!activePointId) return;
+  const idx = state.points.findIndex(p => p.id === activePointId);
+  if (idx === -1) return;
+  state.points[idx].validated = e.target.checked;
+  saveState();
+  document.getElementById('detail-validate-toggle').classList.toggle('checked', e.target.checked);
+  renderDetailPose();            // l'état « posé » peut basculer le badge date au vert
+  renderDetailAssignedList();    // garde le bouton « Tout poser » cohérent
+  updatePointCardColor();        // badge ✓ Posé / fond posé sur la carte
+  populateBagCheckerSelect();
 });
 
 // Point detail — navigation modes

@@ -239,7 +239,12 @@
             <button class="btn-ghost btn-sm" id="btn-detail-edit">✎ Modifier</button>
             <button class="modal-close" id="btn-detail-close">&times;</button>
           </div>
-          <div id="detail-pose-wrap" class="pose-wrap"></div>
+          <div class="pose-row">
+            <label class="validate-toggle" id="detail-validate-toggle" title="Le point est validé/pointé — condition pour être considéré entièrement posé">
+              <input type="checkbox" id="detail-validated" />Validé / Pointé
+            </label>
+            <div id="detail-pose-wrap" class="pose-wrap"></div>
+          </div>
         </div>
       </div>
 
