@@ -173,9 +173,11 @@
         <!-- Import / Export du stock -->
         <div class="admin-card" style="margin-top:24px">
           <h3>Import / Export du stock</h3>
-          <p class="admin-hint">Sauvegarde ou chargement du matériel (catégories, types et unités) au format JSON. N'affecte pas les points, assignations ni indispensables.</p>
+          <p class="admin-hint">JSON : sauvegarde complète réimportable (catégories, types et unités). CSV / Excel : tableau du stock complet (une ligne par unité, avec n° de série et statut) pour consultation ou partage. N'affecte pas les points, assignations ni indispensables.</p>
           <div class="io-actions">
-            <button type="button" id="btn-export-stock" class="btn-primary">⬇ Exporter le stock</button>
+            <button type="button" id="btn-export-stock" class="btn-primary">⬇ Exporter (JSON)</button>
+            <button type="button" id="btn-export-stock-csv" class="btn-ghost">⬇ Exporter en CSV</button>
+            <button type="button" id="btn-export-stock-xls" class="btn-ghost">⬇ Exporter en Excel</button>
             <button type="button" id="btn-import-replace" class="btn-ghost">⬆ Importer — remplacer</button>
             <button type="button" id="btn-import-merge" class="btn-ghost">⬆ Importer — fusionner</button>
             <input type="file" id="input-import-stock" accept="application/json,.json" hidden />

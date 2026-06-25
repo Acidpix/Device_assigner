@@ -1828,6 +1828,86 @@ function exportStock() {
   URL.revokeObjectURL(url);
 }
 
+// ── Export du stock complet en tableau (CSV / Excel) ────────────────────────
+
+function dateStamp() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const aEl = document.createElement('a');
+  aEl.href = url;
+  aEl.download = filename;
+  document.body.appendChild(aEl);
+  aEl.click();
+  aEl.remove();
+  URL.revokeObjectURL(url);
+}
+
+const STOCK_EXPORT_HEADER = ['Catégorie', 'Type de matériel', 'Unité', 'N° de série', 'Inventaire', 'Statut'];
+
+// Une ligne par unité physique, triée par catégorie puis par type.
+function buildStockRows() {
+  const pointByUnit = new Map(state.assignments.map(a => [a.unitId, a.pointId]));
+  const rows = [];
+  state.categories.forEach(cat => {
+    state.items
+      .filter(i => i.catId === cat.id)
+      .forEach(item => {
+        itemUnits(item.id).forEach(unit => {
+          let statut;
+          if (!isInInventaire(unit)) {
+            statut = 'Hors inventaire';
+          } else if (pointByUnit.has(unit.id)) {
+            statut = `Assigné — ${getPoint(pointByUnit.get(unit.id))?.name || '?'}`;
+          } else {
+            statut = 'En réserve';
+          }
+          rows.push([
+            cat.name,
+            item.name,
+            unit.name,
+            unit.serialNumber || '',
+            isInInventaire(unit) ? 'Oui' : 'Non',
+            statut,
+          ]);
+        });
+      });
+  });
+  return rows;
+}
+
+// CSV (séparateur « ; » + BOM UTF-8 → s'ouvre proprement dans Excel FR).
+function exportStockCSV() {
+  const rows = [STOCK_EXPORT_HEADER, ...buildStockRows()];
+  const esc = v => `"${String(v).replace(/"/g, '""')}"`;
+  const BOM = String.fromCharCode(0xFEFF);
+  const csv = BOM + rows.map(r => r.map(esc).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  downloadBlob(blob, `stock-solidays-${dateStamp()}.csv`);
+}
+
+// Excel (.xls) : table HTML interprétée par Excel — aucune dépendance.
+function exportStockXLS() {
+  const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const thead = '<tr>' + STOCK_EXPORT_HEADER.map(h => `<th>${esc(h)}</th>`).join('') + '</tr>';
+  const tbody = buildStockRows()
+    .map(r => '<tr>' + r.map(c => `<td>${esc(c)}</td>`).join('') + '</tr>')
+    .join('');
+  const html =
+    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta charset="utf-8">' +
+    '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>' +
+    '<x:Name>Stock</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>' +
+    '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->' +
+    '<style>table{border-collapse:collapse}th,td{border:1px solid #999;padding:4px 8px;mso-number-format:"\\@"}th{background:#ddd;font-weight:bold}</style>' +
+    `</head><body><table>${thead}${tbody}</table></body></html>`;
+  const blob = new Blob([String.fromCharCode(0xFEFF) + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  downloadBlob(blob, `stock-solidays-${dateStamp()}.xls`);
+}
+
 function validateStock(data) {
   return data && Array.isArray(data.categories) && Array.isArray(data.items) && Array.isArray(data.units);
 }
@@ -1899,6 +1979,8 @@ function handleImportFile(file, mode) {
 
 let importMode = 'replace';
 document.getElementById('btn-export-stock').addEventListener('click', exportStock);
+document.getElementById('btn-export-stock-csv').addEventListener('click', exportStockCSV);
+document.getElementById('btn-export-stock-xls').addEventListener('click', exportStockXLS);
 document.getElementById('btn-import-replace').addEventListener('click', () => { importMode = 'replace'; const el = document.getElementById('input-import-stock'); el.value = ''; el.click(); });
 document.getElementById('btn-import-merge').addEventListener('click', () => { importMode = 'merge'; const el = document.getElementById('input-import-stock'); el.value = ''; el.click(); });
 document.getElementById('input-import-stock').addEventListener('change', e => {
