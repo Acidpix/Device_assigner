@@ -1291,6 +1291,142 @@ function exportDeployRecapCSV() {
   URL.revokeObjectURL(url);
 }
 
+// ── Render: Démontage (matériel revenu) ─────────────────────────────────────
+// Liste tout le matériel déployé, regroupé par point. Chaque unité peut être
+// cochée « revenue » au démontage (assignment.returned) pour suivre les retours.
+
+function renderTeardown() {
+  const summary   = document.getElementById('teardown-summary');
+  const container = document.getElementById('teardown-list');
+  if (!summary || !container) return;
+  container.innerHTML = '';
+
+  const total    = state.assignments.length;
+  const returned = state.assignments.filter(a => a.returned).length;
+  const missing  = total - returned;
+
+  summary.innerHTML = `
+    <span class="recap-summary-stat"><strong>${returned}</strong>/${total} revenu${returned > 1 ? 's' : ''}</span>
+    <span class="recap-summary-sep"></span>
+    <span class="recap-summary-stat"><strong>${missing}</strong> manquant${missing > 1 ? 's' : ''}</span>`;
+
+  if (!total) {
+    container.innerHTML = '<div class="empty-state">Aucun matériel déployé pour le moment.</div>';
+    return;
+  }
+
+  // Regroupement par point, dans l'ordre des points
+  state.points.forEach(point => {
+    const rows = state.assignments
+      .filter(a => a.pointId === point.id)
+      .map(a => { const unit = getUnit(a.unitId); return unit ? { a, unit } : null; })
+      .filter(Boolean)
+      .sort((x, y) => x.unit.name.localeCompare(y.unit.name, 'fr', { numeric: true }));
+    if (!rows.length) return;
+
+    const doneCount = rows.filter(r => r.a.returned).length;
+
+    const block = document.createElement('div');
+    block.className = 'teardown-point-block';
+
+    const header = document.createElement('div');
+    header.className = 'teardown-point-header';
+    header.innerHTML = `
+      <span class="teardown-point-name">${point.name}</span>
+      <span class="teardown-point-count ${doneCount === rows.length ? 'complete' : ''}">${doneCount}/${rows.length} revenus</span>`;
+
+    const allBtn = document.createElement('button');
+    allBtn.className = 'btn-ghost btn-sm teardown-point-all';
+    allBtn.textContent = doneCount === rows.length ? 'Tout décocher' : 'Tout cocher';
+    allBtn.addEventListener('click', () => {
+      const target = doneCount !== rows.length;   // si pas tout revenu → tout cocher
+      rows.forEach(r => { r.a.returned = target; });
+      saveState();
+      renderTeardown();
+    });
+    header.appendChild(allBtn);
+    block.appendChild(header);
+
+    rows.forEach(({ a, unit }) => {
+      const item = getItem(unit.itemId);
+      const cat  = item ? getCat(item.catId) : null;
+
+      const row = document.createElement('div');
+      row.className = 'teardown-unit-row' + (a.returned ? ' done' : '');
+
+      const btn = document.createElement('button');
+      btn.className = 'teardown-check' + (a.returned ? ' checked' : '');
+      btn.textContent = '✓';
+      btn.title = 'Revenu au démontage';
+
+      const main = document.createElement('div');
+      main.className = 'teardown-unit-main';
+      main.innerHTML = `
+        <span class="teardown-unit-name">${unit.name}</span>
+        ${item ? `<span class="teardown-unit-type">${item.name}</span>` : ''}
+        ${cat ? `<span class="teardown-unit-cat" style="background:${cat.color}">${cat.name}</span>` : ''}`;
+
+      btn.addEventListener('click', () => {
+        const idx = state.assignments.findIndex(x => x.pointId === point.id && x.unitId === unit.id);
+        if (idx === -1) return;
+        const v = !state.assignments[idx].returned;
+        state.assignments[idx].returned = v;
+        a.returned = v;
+        btn.classList.toggle('checked', v);
+        row.classList.toggle('done', v);
+        const newDone = rows.filter(r => r.a.returned).length;
+        const countEl = header.querySelector('.teardown-point-count');
+        countEl.textContent = `${newDone}/${rows.length} revenus`;
+        countEl.classList.toggle('complete', newDone === rows.length);
+        allBtn.textContent = newDone === rows.length ? 'Tout décocher' : 'Tout cocher';
+        saveState();
+        renderTeardownSummary();
+      });
+
+      row.appendChild(btn);
+      row.appendChild(main);
+      block.appendChild(row);
+    });
+
+    container.appendChild(block);
+  });
+}
+
+// Recalcule seulement le bandeau de synthèse (sans reconstruire toute la liste).
+function renderTeardownSummary() {
+  const summary = document.getElementById('teardown-summary');
+  if (!summary) return;
+  const total    = state.assignments.length;
+  const returned = state.assignments.filter(a => a.returned).length;
+  const missing  = total - returned;
+  summary.innerHTML = `
+    <span class="recap-summary-stat"><strong>${returned}</strong>/${total} revenu${returned > 1 ? 's' : ''}</span>
+    <span class="recap-summary-sep"></span>
+    <span class="recap-summary-stat"><strong>${missing}</strong> manquant${missing > 1 ? 's' : ''}</span>`;
+}
+
+// Export CSV (séparateur « ; » + BOM UTF-8 → s'ouvre proprement dans Excel FR).
+function exportTeardownCSV() {
+  const rows = [['Point', 'Type de matériel', 'Unité', 'Catégorie', 'Revenu']];
+  state.points.forEach(point => {
+    state.assignments
+      .filter(a => a.pointId === point.id)
+      .forEach(a => {
+        const unit = getUnit(a.unitId);
+        if (!unit) return;
+        const item = getItem(unit.itemId);
+        const cat  = item ? getCat(item.catId) : null;
+        rows.push([point.name, item ? item.name : '', unit.name, cat ? cat.name : '', a.returned ? 'Oui' : 'Non']);
+      });
+  });
+
+  const esc = v => `"${String(v).replace(/"/g, '""')}"`;
+  const BOM = String.fromCharCode(0xFEFF);
+  const csv = BOM + rows.map(r => r.map(esc).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  downloadBlob(blob, `demontage-solidays-${dateStamp()}.csv`);
+}
+
 // ── Reserve filter ─────────────────────────────────────────────────────────
 
 function populateReserveFilter() {
@@ -1605,6 +1741,7 @@ function renderAll() {
   renderBagChecker();
   renderAdmin();
   renderDeployRecap();
+  renderTeardown();
   if (configMode) renderConfigMode();   // garde la vue config à jour après une synchro
 }
 
@@ -1628,13 +1765,17 @@ document.querySelectorAll('.admin-subtab-btn').forEach(btn => {
     document.querySelectorAll('.admin-subtab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`admin-subtab-${btn.dataset.subtab}`).classList.add('active');
-    if (btn.dataset.subtab === 'recap') renderDeployRecap();   // recalcule à l'ouverture
+    if (btn.dataset.subtab === 'recap') renderDeployRecap();      // recalcule à l'ouverture
+    if (btn.dataset.subtab === 'teardown') renderTeardown();
   });
 });
 
 // Récap déploiement
 document.getElementById('btn-recap-export').addEventListener('click', exportDeployRecapCSV);
 document.getElementById('btn-recap-print').addEventListener('click', () => window.print());
+
+// Démontage
+document.getElementById('btn-teardown-export').addEventListener('click', exportTeardownCSV);
 
 // Bag Checker
 document.getElementById('bag-checker-point-select').addEventListener('change', renderBagChecker);

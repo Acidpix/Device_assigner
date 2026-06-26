@@ -308,6 +308,23 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .recap-row-name { color: var(--text); }
 .recap-row-qty { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); background: var(--surface2); min-width: 26px; text-align: center; padding: 2px 9px; border-radius: 6px; font-size: .82rem; }
 
+/* ── Démontage (matériel revenu) ─────────────────────────────────────────── */
+.teardown-point-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
+.teardown-point-header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.teardown-point-name { font-weight: 600; font-size: 1rem; }
+.teardown-point-count { font-size: .8rem; color: var(--text-muted); }
+.teardown-point-count.complete { color: var(--success); font-weight: 600; }
+.teardown-point-all { margin-left: auto; }
+.teardown-unit-row { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid var(--border); }
+.teardown-check { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; border: 2px solid var(--border); background: var(--surface2); color: var(--text-muted); font-size: 1.5rem; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s, color .15s; }
+.teardown-check:active { transform: scale(.95); }
+.teardown-check.checked { background: rgba(0,184,148,.18); border-color: var(--success); color: var(--success); }
+.teardown-unit-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.teardown-unit-name { font-weight: 500; font-size: .95rem; }
+.teardown-unit-row.done .teardown-unit-name { color: var(--text-muted); text-decoration: line-through; }
+.teardown-unit-type { font-size: .82rem; color: var(--text-muted); }
+.teardown-unit-cat { font-size: .72rem; font-weight: 600; color: #fff; padding: 2px 8px; border-radius: 999px; }
+
 @media print {
   body::before { display: none; }
   header, .admin-subtabs, #tab-admin > .section-header, .admin-hint,
