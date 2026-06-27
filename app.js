@@ -281,20 +281,34 @@ function makePointCard(point) {
     : '<div style="color:var(--text-muted);font-size:.85rem">Aucun matériel assigné</div>';
 
   const card = document.createElement('div');
-  const stateColor = getPointStateColor(point.id);
-  const placement  = getPlacementStatus(point.id);
-  card.className = `point-card state-${stateColor}`
-    + (placement === 'full'   ? ' placed-full'    : '')
-    + (placement === 'placed' ? ' placed-pending' : '');
+  let placeBadge = '';
+
+  if (teardownMode) {
+    // Mode démontage : couleur et badge selon le matériel revenu (a.returned)
+    const td = getTeardownStatus(point.id);
+    const colorMap = { full: 'vert', partial: 'jaune', none: 'rouge', empty: 'gris' };
+    card.className = `point-card state-${colorMap[td]}`
+      + (td === 'full'    ? ' teardown-full'    : '')
+      + (td === 'partial' ? ' teardown-partial' : '')
+      + (td === 'none'    ? ' teardown-none'    : '');
+    if (td === 'full')         placeBadge = '<span class="point-teardown-badge full">✓ Démonté</span>';
+    else if (td === 'partial') placeBadge = '<span class="point-teardown-badge partial">◐ Partiellement démonté</span>';
+    else if (td === 'none')    placeBadge = '<span class="point-teardown-badge none">✗ Non démonté</span>';
+  } else {
+    const stateColor = getPointStateColor(point.id);
+    const placement  = getPlacementStatus(point.id);
+    card.className = `point-card state-${stateColor}`
+      + (placement === 'full'   ? ' placed-full'    : '')
+      + (placement === 'placed' ? ' placed-pending' : '');
+    if (placement === 'partial')      placeBadge = '<span class="point-place-badge partial">◐ Partiellement posé</span>';
+    else if (placement === 'placed')  placeBadge = '<span class="point-place-badge placed">📍 Posé · à valider</span>';
+    else if (placement === 'full')    placeBadge = '<span class="point-place-badge full">✓ Posé</span>';
+  }
+
   card.setAttribute('role', 'button');
   card.tabIndex = 0;
   card.draggable = !IS_TOUCH;   // réorganisation par glisser-déposer désactivée au tactile
   card.dataset.pointId = point.id;
-
-  let placeBadge = '';
-  if (placement === 'partial')      placeBadge = '<span class="point-place-badge partial">◐ Partiellement posé</span>';
-  else if (placement === 'placed')  placeBadge = '<span class="point-place-badge placed">📍 Posé · à valider</span>';
-  else if (placement === 'full')    placeBadge = '<span class="point-place-badge full">✓ Posé</span>';
 
   const poseHtml = point.poseDate
     ? `<div class="point-card-pose ${posePillStatus(point)}" title="Date de pose">📅 ${formatPoseDate(point.poseDate)}</div>`
@@ -348,6 +362,18 @@ function getPlacementStatus(pointId) {
   const placed = assigned.filter(a => a.placed).length;
   if (placed === 0) return 'none';
   if (placed === assigned.length) return getPoint(pointId)?.validated ? 'full' : 'placed';
+  return 'partial';
+}
+
+// État de démontage : 'empty' (rien d'assigné) | 'none' (rouge, rien revenu)
+// | 'partial' (jaune, une partie revenue) | 'full' (vert, tout revenu).
+// S'appuie sur a.returned, le même drapeau que l'onglet Démontage.
+function getTeardownStatus(pointId) {
+  const assigned = state.assignments.filter(a => a.pointId === pointId);
+  if (!assigned.length) return 'empty';
+  const returned = assigned.filter(a => a.returned).length;
+  if (returned === 0) return 'none';
+  if (returned === assigned.length) return 'full';
   return 'partial';
 }
 
@@ -416,10 +442,12 @@ function renderPoints() {
 // ── Vue « Par type » (matériel groupé par catégorie / type) ─────────────────
 
 let configMode = false;
+let teardownMode = false;          // vue Points colorée selon le démontage (matériel revenu)
 const expandedTypes = new Set();   // ids de types dépliés ; par défaut tout est replié
 
 function toggleConfigMode() {
   configMode = !configMode;
+  if (configMode && teardownMode) { teardownMode = false; applyTeardownMode(); }  // exclusifs
   applyConfigMode();
 }
 
@@ -430,6 +458,21 @@ function applyConfigMode() {
   btn.classList.toggle('toggle-on', configMode);
   btn.textContent = (configMode ? '✓ Par type' : '⚙ Par type');
   if (configMode) renderConfigMode();
+}
+
+function toggleTeardownMode() {
+  teardownMode = !teardownMode;
+  if (teardownMode && configMode) { configMode = false; applyConfigMode(); }  // exclusifs
+  applyTeardownMode();
+}
+
+function applyTeardownMode() {
+  const tab = document.getElementById('tab-points');
+  tab.classList.toggle('teardown-mode', teardownMode);
+  const btn = document.getElementById('btn-teardown-mode');
+  btn.classList.toggle('toggle-on', teardownMode);
+  btn.textContent = (teardownMode ? '✓ Démontage' : '🔧 Démontage');
+  renderPoints();
 }
 
 // Ouvre la fiche d'un point depuis la vue « Par type » sans quitter ce mode
@@ -1855,6 +1898,7 @@ document.getElementById('form-add-item').addEventListener('submit', e => {
 });
 
 document.getElementById('btn-config-mode').addEventListener('click', toggleConfigMode);
+document.getElementById('btn-teardown-mode').addEventListener('click', toggleTeardownMode);
 
 // Ajouter point
 document.getElementById('btn-add-point').addEventListener('click', openAddPointModal);

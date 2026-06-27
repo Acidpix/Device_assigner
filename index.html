@@ -113,15 +113,22 @@
         <h2>Points de distribution</h2>
         <div style="display:flex;gap:8px">
           <button class="btn-ghost btn-sm" id="btn-config-mode" title="Voir le matériel regroupé par type, pour configurer à la chaîne">⚙ Par type</button>
+          <button class="btn-ghost btn-sm" id="btn-teardown-mode" title="Mode démontage : colore les points selon le matériel revenu">🔧 Démontage</button>
           <button class="btn-primary" id="btn-add-point">+ Ajouter un point</button>
         </div>
       </div>
-      <div class="points-legend">
+      <div class="points-legend" id="points-legend-default">
         <div class="legend-item"><span class="legend-dot gris"></span>Aucune configuration</div>
         <div class="legend-item"><span class="legend-dot jaune"></span>Configuration partielle</div>
         <div class="legend-item"><span class="legend-dot bleu"></span>Tout configuré</div>
         <div class="legend-item"><span class="legend-dot vert"></span>Tout configuré + dans le sac</div>
         <div class="legend-item"><span class="legend-dot rouge"></span>Dans le sac, config incomplète</div>
+      </div>
+      <div class="points-legend" id="points-legend-teardown">
+        <div class="legend-item"><span class="legend-dot gris"></span>Aucun matériel</div>
+        <div class="legend-item"><span class="legend-dot rouge"></span>Non démonté</div>
+        <div class="legend-item"><span class="legend-dot jaune"></span>Partiellement démonté</div>
+        <div class="legend-item"><span class="legend-dot vert"></span>Entièrement démonté</div>
       </div>
       <div id="points-grid"></div>
       <div id="config-mode-list"></div>

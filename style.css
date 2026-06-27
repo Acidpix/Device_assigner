@@ -133,6 +133,21 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .point-card.placed-pending { background: rgba(15,76,110,.82); border-color: #00b8ff; }
 .point-card.placed-pending:hover { box-shadow: 0 0 0 3px rgba(0,184,255,.3); border-color: #00b8ff; }
 .point-card.placed-pending .point-place-badge.placed { background: #00b8ff; color: #04222e; border-color: #00b8ff; }
+
+/* ── Mode démontage : badges + fonds des cartes ── */
+.point-teardown-badge { display: inline-flex; align-items: center; gap: 4px; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+.point-teardown-badge.none    { background: rgba(224,92,92,.16); color: #e05c5c; border: 1px solid rgba(224,92,92,.45); }
+.point-teardown-badge.partial { background: rgba(249,168,37,.15); color: #f9a825; border: 1px solid rgba(249,168,37,.4); }
+.point-teardown-badge.full    { background: rgba(0,184,148,.18); color: var(--success); border: 1px solid rgba(0,184,148,.45); }
+
+.point-card.teardown-none    { background: rgba(107,31,31,.55); border-color: #e05c5c; }
+.point-card.teardown-none:hover    { box-shadow: 0 0 0 3px rgba(224,92,92,.3); border-color: #e05c5c; }
+.point-card.teardown-partial { background: rgba(110,80,15,.5); border-color: #f9a825; }
+.point-card.teardown-partial:hover { box-shadow: 0 0 0 3px rgba(249,168,37,.3); border-color: #f9a825; }
+.point-card.teardown-full    { background: rgba(31,107,87,.82); border-color: var(--success); }
+.point-card.teardown-full:hover    { box-shadow: 0 0 0 3px rgba(0,184,148,.3); border-color: var(--success); }
+.point-card.teardown-full .point-teardown-badge.full { background: var(--success); color: #06281f; border-color: var(--success); }
+
 .point-click-hint { font-size: .72rem; color: var(--text-muted); opacity: 0; transition: opacity .15s; }
 .point-card:hover .point-click-hint { opacity: 1; }
 .point-card-desc { font-size: .82rem; color: var(--text-muted); margin-bottom: 10px; }
@@ -183,8 +198,14 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .admin-hint { font-size: .82rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
 .io-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* ── Légende démontage : visible seulement en mode démontage ── */
+#points-legend-teardown { display: none; }
+#tab-points.teardown-mode #points-legend-default { display: none; }
+#tab-points.teardown-mode #points-legend-teardown { display: flex; }
+
 /* ── Mode Configuration ── */
-#btn-config-mode.toggle-on { background: var(--accent); color: #fff; border-color: var(--accent); }
+#btn-config-mode.toggle-on,
+#btn-teardown-mode.toggle-on { background: var(--accent); color: #fff; border-color: var(--accent); }
 #config-mode-list { display: none; }
 #tab-points.config-mode #points-grid,
 #tab-points.config-mode .points-legend,
