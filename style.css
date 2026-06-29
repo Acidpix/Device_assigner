@@ -338,14 +338,15 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
   overflow: hidden; z-index: 0;
   transition: width .7s cubic-bezier(.34, 1.15, .5, 1);
 }
-/* Surface de l'eau : bande translucide ondulée qui défile horizontalement. */
+/* Surface de l'eau : bande translucide ondulée verticale, sur le bord droit
+   (le front de remplissage), qui défile de haut en bas. */
 .teardown-gauge-wave {
-  position: absolute; top: 0; left: 0; right: 0; height: 14px;
-  background-repeat: repeat-x; background-size: 120px 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='14' viewBox='0 0 120 14'%3E%3Cpath d='M0 8 Q 15 3 30 8 T 60 8 T 90 8 T 120 8 V14 H0 Z' fill='%23ffffff' fill-opacity='0.28'/%3E%3C/svg%3E");
+  position: absolute; top: 0; bottom: 0; right: 0; width: 14px;
+  background-repeat: repeat-y; background-size: 14px 120px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='120' viewBox='0 0 14 120'%3E%3Cpath d='M6 0 Q 11 15 6 30 T 6 60 T 6 90 T 6 120 H0 V0 Z' fill='%23ffffff' fill-opacity='0.28'/%3E%3C/svg%3E");
   animation: teardownWave 2.4s linear infinite;
 }
-@keyframes teardownWave { from { background-position-x: 0; } to { background-position-x: -120px; } }
+@keyframes teardownWave { from { background-position-y: 0; } to { background-position-y: 120px; } }
 .teardown-bubble {
   position: absolute; bottom: 3px; border-radius: 50%;
   background: rgba(255, 255, 255, .5); box-shadow: 0 0 4px rgba(255, 255, 255, .35);
