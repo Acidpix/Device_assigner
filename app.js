@@ -1344,14 +1344,9 @@ function renderTeardown() {
   if (!summary || !container) return;
   container.innerHTML = '';
 
-  const total    = state.assignments.length;
-  const returned = state.assignments.filter(a => a.returned).length;
-  const missing  = total - returned;
+  const total = state.assignments.length;
 
-  summary.innerHTML = `
-    <span class="recap-summary-stat"><strong>${returned}</strong>/${total} revenu${returned > 1 ? 's' : ''}</span>
-    <span class="recap-summary-sep"></span>
-    <span class="recap-summary-stat"><strong>${missing}</strong> manquant${missing > 1 ? 's' : ''}</span>`;
+  summary.innerHTML = teardownGaugeHTML();
 
   if (!total) {
     container.innerHTML = '<div class="empty-state">Aucun matériel déployé pour le moment.</div>';
@@ -1455,17 +1450,55 @@ function renderTeardown() {
   }
 }
 
+// Texte de la synthèse (revenus / manquants), partagé par la jauge.
+function teardownSummaryText() {
+  const total    = state.assignments.length;
+  const returned = state.assignments.filter(a => a.returned).length;
+  const missing  = total - returned;
+  return `
+    <span class="recap-summary-stat"><strong>${returned}</strong>/${total} revenu${returned > 1 ? 's' : ''}</span>
+    <span class="recap-summary-sep"></span>
+    <span class="recap-summary-stat"><strong>${missing}</strong> manquant${missing > 1 ? 's' : ''}</span>`;
+}
+
+// Structure complète de la jauge : un remplissage bleu (largeur = % revenu) avec
+// une vague de surface animée et des bulles qui montent, surmonté du texte.
+function teardownGaugeHTML() {
+  const total    = state.assignments.length;
+  const returned = state.assignments.filter(a => a.returned).length;
+  const pct      = total ? Math.round((returned / total) * 100) : 0;
+
+  // Bulles décoratives : [position %, délai s, durée s, taille px]
+  const bubbles = [
+    [12, 0.0, 3.8, 5], [26, 1.3, 4.6, 4], [44, 0.6, 3.2, 6],
+    [60, 2.0, 4.2, 5], [76, 0.9, 3.6, 4], [90, 1.6, 5.0, 7],
+  ].map(([left, delay, dur, size]) =>
+    `<span class="teardown-bubble" style="left:${left}%;width:${size}px;height:${size}px;animation-delay:${delay}s;animation-duration:${dur}s"></span>`
+  ).join('');
+
+  return `
+    <div class="teardown-gauge-fill" style="width:${pct}%">
+      <div class="teardown-gauge-wave"></div>
+      ${bubbles}
+    </div>
+    <div class="teardown-gauge-text">${teardownSummaryText()}</div>`;
+}
+
 // Recalcule seulement le bandeau de synthèse (sans reconstruire toute la liste).
+// Met à jour la largeur du remplissage en place → la jauge s'anime en douceur.
 function renderTeardownSummary() {
   const summary = document.getElementById('teardown-summary');
   if (!summary) return;
   const total    = state.assignments.length;
   const returned = state.assignments.filter(a => a.returned).length;
-  const missing  = total - returned;
-  summary.innerHTML = `
-    <span class="recap-summary-stat"><strong>${returned}</strong>/${total} revenu${returned > 1 ? 's' : ''}</span>
-    <span class="recap-summary-sep"></span>
-    <span class="recap-summary-stat"><strong>${missing}</strong> manquant${missing > 1 ? 's' : ''}</span>`;
+  const pct      = total ? Math.round((returned / total) * 100) : 0;
+
+  const fill = summary.querySelector('.teardown-gauge-fill');
+  const text = summary.querySelector('.teardown-gauge-text');
+  if (!fill || !text) { summary.innerHTML = teardownGaugeHTML(); return; }
+
+  fill.style.width = pct + '%';
+  text.innerHTML = teardownSummaryText();
 }
 
 // Export CSV (séparateur « ; » + BOM UTF-8 → s'ouvre proprement dans Excel FR).
