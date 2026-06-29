@@ -334,19 +334,25 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .teardown-gauge-fill {
   position: absolute; top: 0; left: 0; bottom: 0; width: 0;
   background: linear-gradient(90deg, #1b5cad, #2f86e4);
-  border-radius: 999px 0 0 999px;
   overflow: hidden; z-index: 0;
   transition: width .7s cubic-bezier(.34, 1.15, .5, 1);
-}
-/* Surface de l'eau : bande translucide ondulée verticale, sur le bord droit
-   (le front de remplissage), qui défile de haut en bas. */
-.teardown-gauge-wave {
-  position: absolute; top: 0; bottom: 0; right: 0; width: 14px;
-  background-repeat: repeat-y; background-size: 14px 120px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='120' viewBox='0 0 14 120'%3E%3Cpath d='M6 0 Q 11 15 6 30 T 6 60 T 6 90 T 6 120 H0 V0 Z' fill='%23ffffff' fill-opacity='0.28'/%3E%3C/svg%3E");
+  /* Le bord droit (front de remplissage) est réellement découpé en vague,
+     via un masque : à gauche tout est plein, le bord droit ondule et défile. */
+  --teardown-wave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='120' viewBox='0 0 14 120'%3E%3Cpath d='M6 0 Q 11 15 6 30 T 6 60 T 6 90 T 6 120 H0 V0 Z' fill='%23ffffff'/%3E%3C/svg%3E");
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 12px), #0000 calc(100% - 12px)), var(--teardown-wave);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 12px), #0000 calc(100% - 12px)), var(--teardown-wave);
+  -webkit-mask-size: 100% 100%, 14px 120px;
+          mask-size: 100% 100%, 14px 120px;
+  -webkit-mask-repeat: no-repeat, repeat-y;
+          mask-repeat: no-repeat, repeat-y;
+  -webkit-mask-position: 0 0, 100% 0;
+          mask-position: 0 0, 100% 0;
   animation: teardownWave 2.4s linear infinite;
 }
-@keyframes teardownWave { from { background-position-y: 0; } to { background-position-y: 120px; } }
+@keyframes teardownWave {
+  from { -webkit-mask-position: 0 0, 100% 0;     mask-position: 0 0, 100% 0; }
+  to   { -webkit-mask-position: 0 0, 100% 120px; mask-position: 0 0, 100% 120px; }
+}
 .teardown-bubble {
   position: absolute; bottom: 3px; border-radius: 50%;
   background: rgba(255, 255, 255, .5); box-shadow: 0 0 4px rgba(255, 255, 255, .35);
@@ -365,7 +371,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .teardown-gauge-text .recap-summary-stat strong { color: #fff; }
 .teardown-gauge-text .recap-summary-sep { background: rgba(255, 255, 255, .4); }
 @media (prefers-reduced-motion: reduce) {
-  .teardown-gauge-wave, .teardown-bubble { animation: none; }
+  .teardown-gauge-fill, .teardown-bubble { animation: none; }
 }
 
 .recap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; align-items: start; }

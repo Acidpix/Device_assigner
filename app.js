@@ -1478,7 +1478,6 @@ function teardownGaugeHTML() {
 
   return `
     <div class="teardown-gauge-fill" style="width:${pct}%">
-      <div class="teardown-gauge-wave"></div>
       ${bubbles}
     </div>
     <div class="teardown-gauge-text">${teardownSummaryText()}</div>`;
