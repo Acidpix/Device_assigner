@@ -1872,6 +1872,27 @@ document.getElementById('btn-recap-print').addEventListener('click', () => windo
 // Démontage
 document.getElementById('btn-teardown-export').addEventListener('click', exportTeardownCSV);
 document.getElementById('teardown-search').addEventListener('input', renderTeardown);
+document.getElementById('btn-teardown-finish').addEventListener('click', finishTeardown);
+
+// Désassigne tout le matériel de tous les points (fin du retour matériel).
+// Les unités retournent en réserve ; le stock et les points sont conservés.
+function finishTeardown() {
+  const total = state.assignments.length;
+  if (!total) { alert('Aucun matériel assigné : il n’y a rien à retourner.'); return; }
+  const pointCount = new Set(state.assignments.map(a => a.pointId)).size;
+  const msg =
+    `FIN RETOUR MATÉRIEL\n\n` +
+    `Cette action va désassigner TOUT le matériel des points :\n` +
+    `  • ${total} unité(s) assignée(s)\n` +
+    `  • réparties sur ${pointCount} point(s)\n\n` +
+    `Toutes les unités retourneront en réserve. Les points, le stock et les ` +
+    `catégories sont conservés.\n\n` +
+    `Confirmer la fin du retour matériel ?`;
+  if (!confirm(msg)) return;
+  state.assignments = [];
+  saveState();
+  renderAll();
+}
 
 // Bag Checker
 document.getElementById('bag-checker-point-select').addEventListener('change', renderBagChecker);

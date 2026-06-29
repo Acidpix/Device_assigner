@@ -72,6 +72,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: .8rem; transition: background .15s; }
 .btn-danger:hover { background: rgba(224,92,92,.15); }
+.btn-danger-solid { background: var(--danger); color: #fff; border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: .8rem; font-weight: 600; transition: filter .15s; white-space: nowrap; }
+.btn-danger-solid:hover { filter: brightness(1.12); }
 .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: .8rem; transition: background .15s, color .15s; }
 .btn-ghost:hover { background: var(--surface2); color: var(--text); }
 .btn-sm { padding: 4px 10px; font-size: .78rem; }
